@@ -2,7 +2,7 @@
 # One-time setup on Apple Silicon macOS (also works on Linux x64).
 #   - OSS CAD Suite (YosysHQ nightly, native arm64): yosys, eqy, sby, iverilog, verilator, cocotb ...
 #   - uv-managed Python 3.12 venv with dev tools + pre-commit hooks
-#   - Optional: OpenSTA in Docker (native arm64 build), exposed on PATH as scripts/bin/sta
+#   - LibreLane (pinned via uv.lock) + its container image: OpenROAD, OpenSTA (scripts/bin/sta), ciel PDKs
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PREFIX="${CHIPRL_EDA_HOME:-$HOME/.local/share/chiprl}"
@@ -36,11 +36,13 @@ export PATH="$PREFIX/oss-cad-suite/bin:$ROOT/scripts/bin:\$PATH"
 ENV
 
 cd "$ROOT"
-uv sync
+uv sync --extra pd
 uv run pre-commit install
 
 if command -v docker >/dev/null && [ "${SKIP_STA:-0}" != 1 ]; then
-  docker build -t chiprl-eda -f docker/Dockerfile . && echo "OpenSTA ready via scripts/bin/sta"
+  LL_VER="$(uv run --extra pd python -c 'import librelane; print(librelane.__version__)')"
+  docker pull "ghcr.io/librelane/librelane:$LL_VER" && echo "OpenSTA/OpenROAD ready (LibreLane $LL_VER image)"
+  uv run --extra pd librelane --dockerized --smoke-test || echo "LibreLane smoke test failed; see output"
 else
   echo "Docker not found or SKIP_STA=1: power uses the python proxy backend only"
 fi

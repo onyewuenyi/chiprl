@@ -8,7 +8,7 @@ import os
 import re
 from pathlib import Path
 
-from ._run import THIRD_PARTY, ToolResult, run, which
+from ._run import THIRD_PARTY, ToolResult, has_yosys_slang, run, which, yosys_read_sv
 
 LIB_GZ = THIRD_PARTY / "sky130/sky130hd_tt.lib.gz"
 
@@ -57,7 +57,7 @@ def synth(sub_path: Path, top: str, workdir: Path, flags: str = "", timeout_s: i
         return ToolResult("synth", ok=False, infra_error=True, diagnostics=[{"msg": "yosys missing"}])
     lib = liberty_path()
     script = f"""
-read_verilog -sv {sub_path}
+{yosys_read_sv(sub_path, top)}
 synth -top {top} -flatten {flags}
 tee -o ltp.txt ltp -noff
 dfflibmap -liberty {lib}
@@ -106,5 +106,6 @@ write_json netlist.json
             "netlist": str(workdir / "netlist.v"),
             "netlist_json": str(workdir / "netlist.json"),
             "liberty": str(lib),
+            "frontend": "slang" if has_yosys_slang() else "read_verilog",
         },
     )

@@ -14,6 +14,7 @@ import shutil
 import subprocess
 import sys
 import time
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -110,3 +111,29 @@ def tool_versions() -> dict[str, str]:
         except Exception as e:
             out[name] = f"error:{e}"
     return out
+
+
+@lru_cache(maxsize=1)
+def has_yosys_slang() -> bool:
+    """True if the yosys-slang plugin (full SystemVerilog frontend) loads. Ships with OSS CAD Suite."""
+    exe = which("yosys")
+    if not exe or os.environ.get("CHIPRL_NO_SLANG"):
+        return False
+    try:
+        p = subprocess.run(
+            [exe, "-q", "-p", "plugin -i slang; help read_slang"],
+            check=False,
+            capture_output=True,
+            timeout=30,
+            stdin=subprocess.DEVNULL,
+        )
+    except Exception:
+        return False
+    return p.returncode == 0
+
+
+def yosys_read_sv(path: Path | str, top: str | None = None) -> str:
+    """Yosys script lines that read a SystemVerilog file: yosys-slang if present, else read_verilog -sv."""
+    if has_yosys_slang():
+        return f"plugin -i slang\nread_slang {path}" + (f" --top {top}" if top else "")
+    return f"read_verilog -sv {path}"

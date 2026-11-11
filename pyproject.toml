@@ -9,12 +9,15 @@ dependencies = []
 
 [project.optional-dependencies]
 # Phase 2+: cocotb testbenches, typed tool schemas
-dv = ["cocotb>=2.0"]
+dv = ["cocotb>=2.1"]
 # Phase 3+: inference, tracking. GPU training deps live on the GPU service image, not on the Mac.
 llm = ["openai>=1.0", "anthropic>=0.40", "wandb>=0.19"]
+pd = [
+    "librelane>=3.0.17",
+]
 
 [dependency-groups]
-dev = ["pytest>=8", "pytest-xdist>=3.6", "ruff>=0.8", "ty", "pre-commit>=4"]
+dev = ["pytest>=9.2", "pytest-xdist>=3.8", "ruff>=0.17", "ty>=0.0.101", "pre-commit>=4.7"]
 
 [project.scripts]
 chiprl-run = "chiprl.pipeline:main"

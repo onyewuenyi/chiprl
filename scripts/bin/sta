@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
-# OpenSTA via the chiprl-eda Docker image. Mounts the cwd, repo and temp dir at identical paths so
+# OpenSTA from the pinned LibreLane container (OpenROAD, OpenSTA, Yosys, Magic, KLayout).
+# Set CHIPRL_EDA_IMAGE=chiprl-eda to use the docker/Dockerfile build instead. Mounts the cwd, repo and temp dir at identical paths so
 # absolute paths written by chiprl resolve inside the container. No network.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 TMP="${TMPDIR:-/tmp}"; TMP="${TMP%/}"
+LL_VER="$(cd "$ROOT" && uv run --extra pd -q python -c 'import librelane; print(librelane.__version__)' 2>/dev/null || echo 3.0.17)"
+EXTRA=(); [ -d "$HOME/.ciel" ] && EXTRA=(-v "$HOME/.ciel:$HOME/.ciel:ro")
 exec docker run --rm -i --network none -u "$(id -u):$(id -g)" \
-  -v "$PWD:$PWD" -v "$ROOT:$ROOT:ro" -v "$TMP:$TMP" -w "$PWD" \
-  "${CHIPRL_EDA_IMAGE:-chiprl-eda}" sta "$@"
+  -v "$PWD:$PWD" -v "$ROOT:$ROOT:ro" -v "$TMP:$TMP" -w "$PWD" ${EXTRA[@]+"${EXTRA[@]}"} \
+  "${CHIPRL_EDA_IMAGE:-ghcr.io/librelane/librelane:$LL_VER}" sta "$@"

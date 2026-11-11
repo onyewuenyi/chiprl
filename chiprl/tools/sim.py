@@ -9,6 +9,7 @@ Anti-hack measures live here because the testbench is the reward source:
 
 from __future__ import annotations
 
+import os
 import re
 import secrets
 from pathlib import Path
@@ -47,21 +48,61 @@ def simulate(
     timescale_ns: bool = False,
     timeout_s: int = 120,
     tag: str = "sim",
+    backend: str | None = None,
 ) -> ToolResult:
-    iverilog, vvp = which("iverilog"), which("vvp")
-    if not (iverilog and vvp):
-        return ToolResult(tag, ok=False, infra_error=True, diagnostics=[{"msg": "iverilog missing"}])
+    """backend: icarus (default; ~0.3 s end to end on VerilogEval) or verilator (--binary --timing).
+
+    Verilator simulates ~30x faster but its C++ build costs ~3-4 s, so it only wins on long
+    testbenches (cocotb regressions, Phase 2). Gate-level sim stays on Icarus: Verilator's UDP
+    support does not cover the Sky130 primitive library.
+    """
+    backend = backend or os.environ.get("CHIPRL_SIM_BACKEND", "icarus")
+    if gate_level:
+        backend = "icarus"
     nonce = "CHIPRL_" + secrets.token_hex(8)
     (workdir / f"{tag}_tb.sv").write_text(prepare_tb(tb, nonce, vcd, timescale_ns))
     (workdir / f"{tag}_ref.sv").write_text(ref_rtl)
     srcs = [f"{tag}_tb.sv", f"{tag}_ref.sv", str(sub_path)]
-    flags = ["-g2012"]
-    if gate_level:
-        flags += ["-DFUNCTIONAL", "-DUNIT_DELAY=#0"]
-        srcs += [str(THIRD_PARTY / "sky130/sky130_hd_primitives.v"), str(THIRD_PARTY / "sky130/sky130_hd.v")]
-    rc, out, dt1 = run(
-        [iverilog, *flags, "-s", "tb", "-o", f"{tag}.vvp", *srcs], workdir, f"{tag}_compile.log", timeout_s=60
-    )
+    if backend == "verilator":
+        exe = which("verilator")
+        if not exe:
+            return ToolResult(tag, ok=False, infra_error=True, diagnostics=[{"msg": "verilator missing"}])
+        build = [
+            exe,
+            "--binary",
+            "--timing",
+            "-Wno-fatal",
+            "-Wno-lint",
+            "-Wno-style",
+            "--top-module",
+            "tb",
+            "-j",
+            "0",
+            "--Mdir",
+            f"{tag}_obj",
+            "-o",
+            "Vtb",
+            *srcs,
+        ]
+        if vcd:
+            build.insert(1, "--trace")
+        run_cmd = [str(workdir / f"{tag}_obj" / "Vtb")]
+        build_timeout = 300
+    else:
+        iverilog, vvp = which("iverilog"), which("vvp")
+        if not (iverilog and vvp):
+            return ToolResult(tag, ok=False, infra_error=True, diagnostics=[{"msg": "iverilog missing"}])
+        flags = ["-g2012"]
+        if gate_level:
+            flags += ["-DFUNCTIONAL", "-DUNIT_DELAY=#0"]
+            srcs += [
+                str(THIRD_PARTY / "sky130/sky130_hd_primitives.v"),
+                str(THIRD_PARTY / "sky130/sky130_hd.v"),
+            ]
+        build = [iverilog, *flags, "-s", "tb", "-o", f"{tag}.vvp", *srcs]
+        run_cmd = [vvp, "-n", f"{tag}.vvp"]
+        build_timeout = 60
+    rc, out, dt1 = run(build, workdir, f"{tag}_compile.log", timeout_s=build_timeout, mem_mb=8192)
     if rc is None:
         return ToolResult(f"{tag}_compile", ok=False, infra_error=True, timeout=True)
     if rc != 0:
@@ -72,8 +113,9 @@ def simulate(
             diagnostics=diags,
             elapsed_s=dt1,
             log_path=str(workdir / f"{tag}_compile.log"),
+            metrics={"backend": backend},
         )
-    rc, out, dt2 = run([vvp, "-n", f"{tag}.vvp"], workdir, f"{tag}.log", timeout_s=timeout_s)
+    rc, out, dt2 = run(run_cmd, workdir, f"{tag}.log", timeout_s=timeout_s)
     if rc is None:
         # wall-clock timeout of a DUT that hangs the simulator is behavior, not infra.
         return ToolResult(
@@ -89,7 +131,7 @@ def simulate(
             ok=False,
             infra_error=True,
             elapsed_s=dt1 + dt2,
-            diagnostics=[{"msg": f"vvp killed by signal {-rc}"}],
+            diagnostics=[{"msg": f"simulator killed by signal {-rc}"}],
         )
     m = [r for ln in out.splitlines() if ln.startswith(nonce) for r in _RESULT_RE.findall(ln)]
     if not m:
@@ -112,6 +154,9 @@ def simulate(
             "samples": samples,
             "pass_frac": (1 - mism / samples) if samples else 0.0,
             "timed_out_in_tb": "TIMEOUT" in out,
+            "backend": backend,
+            "build_s": round(dt1, 3),
+            "run_s": round(dt2, 3),
         },
         diagnostics=[{"hint": h} for h in hints],
         log_path=str(workdir / f"{tag}.log"),

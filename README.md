@@ -15,6 +15,7 @@ brew install uv                # plus Docker Desktop if you want OpenSTA
 source .envrc
 make check                     # ruff + ty + grader golden tests
 make smoke                     # one VerilogEval task end to end -> JSON
+uv run python -m chiprl.pipeline tests/fixtures/verilogeval/Prob068_countbcd --pnr   # + post-route
 uv run python -m chiprl.pipeline <task_dir> --rtl my_submission.sv
 ```
 
@@ -24,11 +25,12 @@ uv run python -m chiprl.pipeline <task_dir> --rtl my_submission.sv
 submission.sv
   -> lint     policy (no $systasks, no final, no RefModule shadowing) + verilator --lint-only
   -> sim      iverilog vs hidden tb; nonce-tagged result line; sample count must match reference
-  -> equiv    yosys equiv_make / equiv_simple -seq / equiv_induct   (+0.1 bonus if proven)
-  -> synth    yosys synth + dfflibmap + abc -liberty sky130_fd_sc_hd tt_025C_1v80
+  -> equiv    eqy (sat strategy), fallback yosys equiv_*               (+0.1 bonus if proven)
+  -> synth    yosys-slang frontend, synth + dfflibmap + abc, sky130_fd_sc_hd tt (dont_use filtered)
   -> glsim    iverilog on the netlist + sky130 cell models, same hidden stimulus, 100 MHz, VCD
   -> power    OpenSTA read_vcd + report_power   (if `sta` on PATH)
               python proxy: sum 0.5*C_fanout*V^2*toggles/T + leakage   (always)
+  -> [--pnr] LibreLane RTL-to-GDS, post-route gate sim, OpenSTA with SPEF + VCD (slow path)
   -> JSON     reward, stage, area_um2, cells, flops, logic_depth, power_w, post_synth_sim_pass
 ```
 

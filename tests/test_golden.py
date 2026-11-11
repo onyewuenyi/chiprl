@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import re
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -99,3 +100,18 @@ def test_constant_outputs_score_zero(task):
     body = "\n".join(f"assign {n} = {w}'d0;" for n, w in outs)
     r = grade_rtl(hdr + body + "\nendmodule\n", task)
     assert r.reward == 0.0, r
+
+
+@pytest.mark.parametrize("backend", ["icarus", "verilator"])
+def test_sim_backends_agree(backend):
+    """Both simulators must give the same verdict and sample count on reference and a mutant."""
+    from chiprl.tools.sim import simulate
+
+    task = load_verilogeval_dir(FIX / "Prob068_countbcd")
+    for src, want_ok in [(_ref(task), True), (next(iter(mutants(_ref(task))))[1], False)]:
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "dut.sv"
+            p.write_text(src)
+            r = simulate(p, task.ref_rtl, task.testbench, Path(d), backend=backend)
+            assert r.ok is want_ok, r
+            assert r.metrics["samples"] == 39805

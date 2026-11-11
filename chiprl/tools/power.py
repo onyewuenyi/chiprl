@@ -189,6 +189,7 @@ def opensta_power(
     clock: str | None,
     period_ns: float,
     scope: str,
+    spef: Path | None = None,
 ) -> ToolResult:
     exe = which("sta")
     if not exe:
@@ -202,8 +203,9 @@ def opensta_power(
 read_verilog {netlist_v}
 link_design {top}
 {clk}
-set_input_delay 0 -clock [get_clocks *] [delete_from_list [all_inputs] [get_ports -quiet {clock or "__none__"}]]
+set_input_delay 0 -clock [get_clocks *] [all_inputs]
 set_output_delay 0 -clock [get_clocks *] [all_outputs]
+{f"read_spef {spef}" if spef else ""}
 read_vcd -scope {scope} {vcd_path}
 report_activity_annotation
 report_power -digits 6
@@ -235,6 +237,7 @@ exit
             "total_w": total,
             "wns_ns": float(wns.group(1)) if wns else None,
             "period_ns": period_ns,
+            "parasitics": "spef" if spef else "none",
         },
     )
 

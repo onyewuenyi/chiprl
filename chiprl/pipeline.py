@@ -32,7 +32,7 @@ def run_task(
     use_cache: bool = True,
 ) -> dict:
     t0 = time.time()
-    ck = cache.key("pipeline/v1", task.content_hash(), sub_rtl, power_backend, str(period_ns))
+    ck = cache.key("pipeline/v2", task.content_hash(), sub_rtl, power_backend, str(period_ns))
     if use_cache and (hit := cache.get(ck)):
         return {**hit, "cache_hit": True}
     out: dict = {"task_id": task.task_id, "family": task.family, "tool_versions": tool_versions()}
@@ -100,11 +100,16 @@ def main(argv=None) -> int:
     ap.add_argument("--period-ns", type=float, default=10.0)
     ap.add_argument("--keep", action="store_true", help="keep the work dir")
     ap.add_argument("--no-cache", action="store_true")
+    ap.add_argument("--pnr", action="store_true", help="also run the LibreLane slow path (minutes)")
     a = ap.parse_args(argv)
     task = load_verilogeval_dir(a.task_dir)
     rtl = a.rtl.read_text() if a.rtl else task.ref_rtl.replace("RefModule", task.top)
     wd = Path(tempfile.mkdtemp(prefix=f"chiprl_{task.task_id}_"))
     res = run_task(task, rtl, wd, a.power_backend, a.period_ns, use_cache=not a.no_cache)
+    if a.pnr and (res.get("ppa") or {}).get("area_um2") is not None:
+        from .tools.pnr import pnr
+
+        res["pnr"] = pnr(task, rtl, wd, period_ns=a.period_ns).to_dict()
     res["workdir"] = str(wd) if a.keep else None
     js = json.dumps(res, indent=2, default=str)
     if a.out:

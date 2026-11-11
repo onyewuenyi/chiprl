@@ -56,8 +56,8 @@ ML task. The learning path below is weighted toward those.
 - [x] One VerilogEval task through lint, sim, equiv, synth, gate-sim, power
 - [x] Golden tests: ref 1.1, 35/36 mutants killed (1 equivalent), empty 0, constant 0, 3 hacks blocked
 - [ ] OpenSTA backend verified in Docker on my machine; record proxy vs OpenSTA on the 4 fixtures
-- [ ] LibreLane slow path (Python Steps API) on the 4 fixtures: post-route area, WNS, power
-- [ ] Swap frontend to yosys-slang, equivalence to eqy, add Verilator --timing sim backend
+- [x] LibreLane slow path wired (`--pnr`); first real run is the nightly CI job / my Mac
+- [x] yosys-slang frontend, eqy equivalence, Verilator --timing backend (all feature-detected)
 - [ ] Load 100 VerilogEval v2 tasks; family tags; train/val split; decontam manifest (n-gram overlap vs CVDP)
 - [ ] pass@1 / pass@5 table for 2 to 3 models (one small open model via vLLM or API, one frontier)
 
