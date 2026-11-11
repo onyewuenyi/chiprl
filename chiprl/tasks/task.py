@@ -1,4 +1,5 @@
 """Task dataclass and the VerilogEval v2 (spec-to-rtl) loader."""
+
 from __future__ import annotations
 
 import dataclasses
@@ -10,11 +11,11 @@ from pathlib import Path
 @dataclasses.dataclass(frozen=True)
 class Task:
     task_id: str
-    family: str                 # arithmetic | fsm | datapath | counter | comb ... used for splits
-    spec: str                   # what the policy sees
-    ports: tuple[tuple[str, str, int], ...]   # (dir, name, width)
-    ref_rtl: str                # hidden. module RefModule
-    testbench: str              # hidden. instantiates RefModule + TopModule
+    family: str  # arithmetic | fsm | datapath | counter | comb ... used for splits
+    spec: str  # what the policy sees
+    ports: tuple[tuple[str, str, int], ...]  # (dir, name, width)
+    ref_rtl: str  # hidden. module RefModule
+    testbench: str  # hidden. instantiates RefModule + TopModule
     top: str = "TopModule"
     source: str = "verilogeval_v2"
 
@@ -45,9 +46,14 @@ def parse_ports(ref_rtl: str) -> tuple[tuple[str, str, int], ...]:
     return tuple(ports)
 
 
-_FAMILY_HINTS = [("fsm", r"fsm|state|moore|mealy"), ("counter", r"count"),
-                 ("arith", r"add|sub|mul|popcount|sum"), ("shift", r"shift|lfsr|rotate"),
-                 ("mux", r"mux"), ("gates", r"gate|xor|and|or|not|wire")]
+_FAMILY_HINTS = [
+    ("fsm", r"fsm|state|moore|mealy"),
+    ("counter", r"count"),
+    ("arith", r"add|sub|mul|popcount|sum"),
+    ("shift", r"shift|lfsr|rotate"),
+    ("mux", r"mux"),
+    ("gates", r"gate|xor|and|or|not|wire"),
+]
 
 
 def guess_family(task_id: str, spec: str) -> str:
@@ -62,8 +68,14 @@ def load_verilogeval_dir(d: Path) -> Task:
     """Fixture layout: <dir>/{prompt.txt, ref.sv, test.sv}."""
     ref = (d / "ref.sv").read_text()
     spec = (d / "prompt.txt").read_text()
-    return Task(task_id=d.name, family=guess_family(d.name, spec), spec=spec,
-                ports=parse_ports(ref), ref_rtl=ref, testbench=(d / "test.sv").read_text())
+    return Task(
+        task_id=d.name,
+        family=guess_family(d.name, spec),
+        spec=spec,
+        ports=parse_ports(ref),
+        ref_rtl=ref,
+        testbench=(d / "test.sv").read_text(),
+    )
 
 
 def load_verilogeval_dataset(dataset_dir: Path, limit: int | None = None) -> list[Task]:
@@ -73,9 +85,16 @@ def load_verilogeval_dataset(dataset_dir: Path, limit: int | None = None) -> lis
         stem = prompt.name[: -len("_prompt.txt")]
         ref = (dataset_dir / f"{stem}_ref.sv").read_text()
         spec = prompt.read_text()
-        tasks.append(Task(task_id=stem, family=guess_family(stem, spec), spec=spec,
-                          ports=parse_ports(ref), ref_rtl=ref,
-                          testbench=(dataset_dir / f"{stem}_test.sv").read_text()))
+        tasks.append(
+            Task(
+                task_id=stem,
+                family=guess_family(stem, spec),
+                spec=spec,
+                ports=parse_ports(ref),
+                ref_rtl=ref,
+                testbench=(dataset_dir / f"{stem}_test.sv").read_text(),
+            )
+        )
         if limit and len(tasks) >= limit:
             break
     return tasks

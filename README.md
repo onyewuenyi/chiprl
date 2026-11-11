@@ -7,11 +7,15 @@ Status: Phase 1 pipeline working. One command takes a VerilogEval v2 task throug
 lint, simulation, equivalence, Yosys/ABC synthesis to Sky130 HD, gate-level simulation and
 switching-activity power, and emits structured JSON.
 
+Runs locally on an Apple Silicon Mac. GPU phases use a rented service (see [docs/STACK.md](docs/STACK.md)).
+
 ```bash
-sudo apt-get install -y yosys iverilog verilator     # OpenSTA optional, see docker/
-python3 -m pytest -q                                  # grader golden tests (32 pass)
-python3 -m chiprl.pipeline tests/fixtures/verilogeval/Prob068_countbcd --out run.json
-python3 -m chiprl.pipeline <task_dir> --rtl my_submission.sv
+brew install uv                # plus Docker Desktop if you want OpenSTA
+./scripts/setup_mac.sh         # OSS CAD Suite (arm64), uv venv, pre-commit, OpenSTA image
+source .envrc
+make check                     # ruff + ty + grader golden tests
+make smoke                     # one VerilogEval task end to end -> JSON
+uv run python -m chiprl.pipeline <task_dir> --rtl my_submission.sv
 ```
 
 ## Pipeline
@@ -37,7 +41,7 @@ excluded from training and eval, never scored as 0.
 |---|---|---|---|---|---|---|---|---|
 | Prob009_popcount3 | 1.1 | proven | 33.8 | 0 | 3 | 3.06 uW | pass | 1.1 |
 | Prob035_count1to10 | 1.1 | proven | 143.9 | 4 | 3 | 7.16 uW | pass | 1.1 |
-| Prob068_countbcd | 1.1 | proven | 646.9 | 16 | 6 | 14.80 uW | pass | 2.3 |
+| Prob068_countbcd | 1.1 | proven | 628.1 | 16 | 6 | 14.69 uW | pass | 2.3 |
 | Prob075_counter_2bc | 1.1 | proven | 96.3 | 2 | 4 | 4.49 uW | pass | 1.1 |
 
 Proxy power excludes internal (short-circuit + flop clock-pin) power and wire cap, so it
@@ -64,7 +68,8 @@ chiprl/
 configs/      env / reward / eval yaml
 tests/        golden tests; fixtures are 4 VerilogEval v2 tasks (MIT, NVlabs)
 third_party/  Sky130 HD liberty + cell models (Apache-2.0, via OpenSTA examples)
-docker/       pinned EDA image incl. OpenSTA
+docker/       arm64-native OpenSTA image
+scripts/      setup_mac.sh, bin/sta (Docker wrapper)
 ```
 
 See [docs/PLAN.md](docs/PLAN.md) for the roadmap.

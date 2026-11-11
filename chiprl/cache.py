@@ -1,4 +1,5 @@
 """SQLite result cache keyed on sha256(rtl + constraints + tool versions + flags)."""
+
 from __future__ import annotations
 
 import hashlib

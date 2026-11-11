@@ -4,6 +4,7 @@
 
 With no --rtl, the reference implementation is the submission (pipeline smoke test).
 """
+
 from __future__ import annotations
 
 import argparse
@@ -22,8 +23,14 @@ from .tools.sim import simulate
 from .tools.synth import synth
 
 
-def run_task(task: Task, sub_rtl: str, workdir: Path, power_backend: str = "auto",
-             period_ns: float = 10.0, use_cache: bool = True) -> dict:
+def run_task(
+    task: Task,
+    sub_rtl: str,
+    workdir: Path,
+    power_backend: str = "auto",
+    period_ns: float = 10.0,
+    use_cache: bool = True,
+) -> dict:
     t0 = time.time()
     ck = cache.key("pipeline/v1", task.content_hash(), sub_rtl, power_backend, str(period_ns))
     if use_cache and (hit := cache.get(ck)):
@@ -43,17 +50,35 @@ def run_task(task: Task, sub_rtl: str, workdir: Path, power_backend: str = "auto
         return out
     # Gate-level sim on the same hidden stimulus: (1) post-synth functional check,
     # (2) full-netlist switching activity for power.
-    gl = simulate(Path(s.metrics["netlist"]), task.ref_rtl, task.testbench, workdir,
-                  vcd="gl.vcd", gate_level=True, timescale_ns=True, tag="glsim")
+    gl = simulate(
+        Path(s.metrics["netlist"]),
+        task.ref_rtl,
+        task.testbench,
+        workdir,
+        vcd="gl.vcd",
+        gate_level=True,
+        timescale_ns=True,
+        tag="glsim",
+    )
     out["gate_sim"] = gl.to_dict()
     p = None
     if gl.metrics.get("samples"):
-        p = power(Path(s.metrics["netlist"]), Path(s.metrics["netlist_json"]), workdir / "gl.vcd",
-                  s.metrics["liberty"], task.top, workdir, task.clock, period_ns,
-                  backend=power_backend)
+        p = power(
+            Path(s.metrics["netlist"]),
+            Path(s.metrics["netlist_json"]),
+            workdir / "gl.vcd",
+            s.metrics["liberty"],
+            task.top,
+            workdir,
+            task.clock,
+            period_ns,
+            backend=power_backend,
+        )
         out["power"] = p.to_dict()
     out["ppa"] = {
-        "area_um2": s.metrics["area_um2"], "cells": s.metrics["cells"], "flops": s.metrics["flops"],
+        "area_um2": s.metrics["area_um2"],
+        "cells": s.metrics["cells"],
+        "flops": s.metrics["flops"],
         "logic_depth": s.metrics["logic_depth"],
         "power_w": p.metrics.get("total_w") if p and p.ok else None,
         "power_backend": p.metrics.get("backend") if p and p.ok else None,
@@ -87,6 +112,7 @@ def main(argv=None) -> int:
     print(js)
     if not a.keep:
         import shutil
+
         shutil.rmtree(wd, ignore_errors=True)
     return 0 if res["grade"]["reward"] is not None else 2
 

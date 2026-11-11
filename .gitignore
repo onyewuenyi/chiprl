@@ -1,8 +1,11 @@
 __pycache__/
 *.pyc
 .pytest_cache/
-third_party/sky130/*.lib
 third_party/sky130/*.chiprl.json
 runs/
 wandb/
 *.vcd
+.venv/
+third_party/sky130/*.chiprl.lib
+third_party/sky130/*.tmp
+.ruff_cache/

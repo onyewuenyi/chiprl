@@ -8,9 +8,11 @@ Two backends, same JSON shape:
     No internal power, no wire cap. This is the "toggle-weighted capacitance" proxy that
     the Phase 5 proxy study correlates against OpenSTA.
 """
+
 from __future__ import annotations
 
 import json
+import os
 import re
 from functools import lru_cache
 from pathlib import Path
@@ -30,8 +32,9 @@ def parse_liberty(lib_path: str) -> dict:
     cells: dict = {}
     cell = pin = None
     depth = cell_depth = pin_depth = 0
-    for raw in open(lib_path):
-        ln = raw.strip()
+    with open(lib_path) as fh:
+        lines = [raw.strip() for raw in fh]
+    for ln in lines:
         m = re.match(r'cell\s*\(\s*"?([\w]+)"?\s*\)\s*\{', ln)
         if m:
             cell = m.group(1)
@@ -56,7 +59,9 @@ def parse_liberty(lib_path: str) -> dict:
             pin = None
         if cell and depth < cell_depth:
             cell = None
-    cache.write_text(json.dumps(cells))
+    tmp = cache.with_suffix(f".{os.getpid()}.tmp")
+    tmp.write_text(json.dumps(cells))
+    tmp.rename(cache)
     return cells
 
 
@@ -71,13 +76,14 @@ def vcd_toggles(vcd_path: Path) -> tuple[dict[str, int], float, float]:
     in_defs = True
     with open(vcd_path) as f:
         text_iter = iter(f)
-        for ln in text_iter:
-            ln = ln.strip()
+        for raw in text_iter:
+            ln = raw.strip()
             if in_defs:
                 if ln.startswith("$timescale"):
                     body = ln if "$end" in ln else ln + " " + next(text_iter).strip()
                     m = re.search(r"(\d+)\s*(s|ms|us|ns|ps|fs)", body)
-                    ts_s = int(m.group(1)) * unit[m.group(2)]
+                    if m:
+                        ts_s = int(m.group(1)) * unit[m.group(2)]
                 elif ln.startswith("$var"):
                     parts = ln.split()
                     width, vid, name = int(parts[2]), parts[3], parts[4]
@@ -156,27 +162,47 @@ def proxy_power(netlist_json: Path, vcd_path: Path, lib_path: str, top: str) -> 
         annotated += 1
         e_sw += 0.5 * c_pf * 1e-12 * VDD**2 * n
     p_sw = e_sw / t_end
-    return {"backend": "proxy", "switching_w": p_sw, "internal_w": None,
-            "leakage_w": leak_nw * 1e-9, "total_w": p_sw + leak_nw * 1e-9,
-            "nets_with_cap": len(cap), "nets_annotated": annotated,
-            "annotation_frac": annotated / max(1, len(cap)), "sim_time_s": t_end,
-            "toggle_weighted_cap_pf": sum(c * tog.get(bit_name.get(b, ""), 0) for b, c in cap.items())}
+    return {
+        "backend": "proxy",
+        "switching_w": p_sw,
+        "internal_w": None,
+        "leakage_w": leak_nw * 1e-9,
+        "total_w": p_sw + leak_nw * 1e-9,
+        "nets_with_cap": len(cap),
+        "nets_annotated": annotated,
+        "annotation_frac": annotated / max(1, len(cap)),
+        "sim_time_s": t_end,
+        "toggle_weighted_cap_pf": sum(c * tog.get(bit_name.get(b, ""), 0) for b, c in cap.items()),
+    }
 
 
 # ---------------------------------------------------------------- OpenSTA backend
 _PWR_TOTAL_RE = re.compile(r"^Total\s+([\d.eE+-]+)\s+([\d.eE+-]+)\s+([\d.eE+-]+)\s+([\d.eE+-]+)", re.M)
 
 
-def opensta_power(netlist_v: Path, vcd_path: Path, lib_path: str, top: str, workdir: Path,
-                  clock: str | None, period_ns: float, scope: str) -> ToolResult:
+def opensta_power(
+    netlist_v: Path,
+    vcd_path: Path,
+    lib_path: str,
+    top: str,
+    workdir: Path,
+    clock: str | None,
+    period_ns: float,
+    scope: str,
+) -> ToolResult:
     exe = which("sta")
-    clk = f"create_clock -name clk -period {period_ns} [get_ports {clock}]" if clock else \
-        f"create_clock -name vclk -period {period_ns}"
+    if not exe:
+        return ToolResult("power", ok=False, infra_error=True, diagnostics=[{"msg": "sta missing"}])
+    clk = (
+        f"create_clock -name clk -period {period_ns} [get_ports {clock}]"
+        if clock
+        else f"create_clock -name vclk -period {period_ns}"
+    )
     tcl = f"""read_liberty {lib_path}
 read_verilog {netlist_v}
 link_design {top}
 {clk}
-set_input_delay 0 -clock [get_clocks *] [delete_from_list [all_inputs] [get_ports -quiet {clock or '__none__'}]]
+set_input_delay 0 -clock [get_clocks *] [delete_from_list [all_inputs] [get_ports -quiet {clock or "__none__"}]]
 set_output_delay 0 -clock [get_clocks *] [all_outputs]
 read_vcd -scope {scope} {vcd_path}
 report_activity_annotation
@@ -188,32 +214,59 @@ exit
     (workdir / "power.tcl").write_text(tcl)
     rc, out, dt = run([exe, "-no_splash", "-exit", "power.tcl"], workdir, "sta.log", timeout_s=300)
     if rc is None or rc != 0:
-        return ToolResult("power", ok=False, infra_error=True, elapsed_s=dt, log_path=str(workdir / "sta.log"))
+        return ToolResult(
+            "power", ok=False, infra_error=True, elapsed_s=dt, log_path=str(workdir / "sta.log")
+        )
     m = _PWR_TOTAL_RE.search(out)
     wns = re.search(r"wns\s+(?:max\s+)?([\d.eE+-]+)", out)
     if not m:
         return ToolResult("power", ok=False, infra_error=True, diagnostics=[{"msg": "no Total line"}])
     internal, switching, leakage, total = (float(x) for x in m.groups())
-    return ToolResult("power", ok=True, elapsed_s=dt, log_path=str(workdir / "sta.log"), metrics={
-        "backend": "opensta", "internal_w": internal, "switching_w": switching,
-        "leakage_w": leakage, "total_w": total, "wns_ns": float(wns.group(1)) if wns else None,
-        "period_ns": period_ns})
+    return ToolResult(
+        "power",
+        ok=True,
+        elapsed_s=dt,
+        log_path=str(workdir / "sta.log"),
+        metrics={
+            "backend": "opensta",
+            "internal_w": internal,
+            "switching_w": switching,
+            "leakage_w": leakage,
+            "total_w": total,
+            "wns_ns": float(wns.group(1)) if wns else None,
+            "period_ns": period_ns,
+        },
+    )
 
 
-def power(netlist_v: Path, netlist_json: Path, vcd_path: Path, lib_path: str, top: str,
-          workdir: Path, clock: str | None, period_ns: float = 10.0, scope: str = "tb/top_module1",
-          backend: str = "auto") -> ToolResult:
+def power(
+    netlist_v: Path,
+    netlist_json: Path,
+    vcd_path: Path,
+    lib_path: str,
+    top: str,
+    workdir: Path,
+    clock: str | None,
+    period_ns: float = 10.0,
+    scope: str = "tb/top_module1",
+    backend: str = "auto",
+) -> ToolResult:
     """backend: auto (opensta if available, plus proxy), opensta, proxy."""
     metrics: dict = {}
     if backend in ("auto", "proxy"):
         try:
             metrics["proxy"] = proxy_power(netlist_json, vcd_path, lib_path, top)
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             return ToolResult("power", ok=False, infra_error=True, diagnostics=[{"msg": f"proxy: {e}"}])
     if backend in ("auto", "opensta") and which("sta"):
         r = opensta_power(netlist_v, vcd_path, lib_path, top, workdir, clock, period_ns, scope)
         metrics["opensta"] = r.metrics if r.ok else {"error": r.diagnostics or "failed"}
     elif backend == "opensta":
         return ToolResult("power", ok=False, infra_error=True, diagnostics=[{"msg": "sta missing"}])
-    best = metrics.get("opensta") if metrics.get("opensta", {}).get("total_w") is not None else metrics["proxy"]
-    return ToolResult("power", ok=True, metrics={"total_w": best["total_w"], "backend": best["backend"], **metrics})
+    sta_m = metrics.get("opensta") or {}
+    best = sta_m if sta_m.get("total_w") is not None else metrics.get("proxy")
+    if best is None:
+        return ToolResult("power", ok=False, infra_error=True, diagnostics=[{"msg": "opensta failed"}])
+    return ToolResult(
+        "power", ok=True, metrics={"total_w": best["total_w"], "backend": best["backend"], **metrics}
+    )

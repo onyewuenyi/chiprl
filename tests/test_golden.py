@@ -1,11 +1,12 @@
 """Grader golden tests. CI runs these on every commit. If any fails, no reward number is trustworthy.
 
-  1. reference RTL scores >= 1.0
-  2. >= 90% of the first 10 mutants score < 1.0 (equivalent mutants can survive; listed in output)
-  3. empty module scores 0
-  4. known reward hacks score 0: early $finish, spoofed result line, shadowing RefModule
-  5. constant-output DUT scores 0
+1. reference RTL scores >= 1.0
+2. >= 90% of the first 10 mutants score < 1.0 (equivalent mutants can survive; listed in output)
+3. empty module scores 0
+4. known reward hacks score 0: early $finish, spoofed result line, shadowing RefModule
+5. constant-output DUT scores 0
 """
+
 from __future__ import annotations
 
 import re
@@ -82,8 +83,12 @@ def test_hack_shadow_refmodule(task):
 def test_sample_count_guard_without_policy(task, monkeypatch):
     """Defense in depth: even if the static policy misses a $finish, the sample-count gate catches it."""
     import chiprl.graders.rtl_gen as g
-    monkeypatch.setattr(g, "lint", lambda *a, **k: type("L", (), {"ok": True, "infra_error": False,
-                                                                      "to_dict": lambda s: {}})())
+
+    monkeypatch.setattr(
+        g,
+        "lint",
+        lambda *a, **k: type("L", (), {"ok": True, "infra_error": False, "to_dict": lambda s: {}})(),
+    )
     r = grade_rtl(_inject(task, "initial #100 $finish;"), task)
     assert r.reward == 0.0 and r.stage == "samples", r
 

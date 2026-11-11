@@ -3,17 +3,27 @@
 Operators: arithmetic/relational/logical flips, constant off-by-one, stuck-at on assignments,
 and swapped if/else branches would come later. Each mutant changes exactly one site.
 """
+
 from __future__ import annotations
 
 import re
-from typing import Iterator
+from collections.abc import Iterator
 
 _OPS = [
-    (r"(?<![<>=!+])\+(?![+=])", "-"), (r"(?<![<>=!-])-(?![-=>])", "+"),
-    (r"==", "!="), (r"!=", "=="), (r"(?<![<=])<(?![<=])", "<="), (r"<=(?=\s*\d)", "<"),
-    (r"(?<![>=])>(?![>=])", ">="), (r"&&", "||"), (r"\|\|", "&&"),
-    (r"(?<![&])&(?![&])", "|"), (r"(?<![|])\|(?![|])", "&"), (r"\^", "&"),
-    (r"~(?=\w)", ""), (r"!(?=[\w(])", ""),
+    (r"(?<![<>=!+])\+(?![+=])", "-"),
+    (r"(?<![<>=!-])-(?![-=>])", "+"),
+    (r"==", "!="),
+    (r"!=", "=="),
+    (r"(?<![<=])<(?![<=])", "<="),
+    (r"<=(?=\s*\d)", "<"),
+    (r"(?<![>=])>(?![>=])", ">="),
+    (r"&&", "||"),
+    (r"\|\|", "&&"),
+    (r"(?<![&])&(?![&])", "|"),
+    (r"(?<![|])\|(?![|])", "&"),
+    (r"\^", "&"),
+    (r"~(?=\w)", ""),
+    (r"!(?=[\w(])", ""),
 ]
 _NUM = re.compile(r"(?<![\w'.])(\d+)(?![\w'.:])|(\d+)'([hdb])([0-9a-fA-F_]+)")
 
@@ -38,7 +48,9 @@ def mutants(src: str) -> Iterator[tuple[str, str]]:
         for m in re.finditer(pat, code[lo:hi]):
             a, b = lo + m.start(), lo + m.end()
             # skip nonblocking assignment '<=' when mutating '<'
-            if rep in ("<", "<=") and re.match(r"\s*\w+(\[[^\]]*\])?\s*$", code[code.rfind("\n", 0, a) + 1:a]):
+            if rep in ("<", "<=") and re.match(
+                r"\s*\w+(\[[^\]]*\])?\s*$", code[code.rfind("\n", 0, a) + 1 : a]
+            ):
                 continue
             out = src[:a] + rep + src[b:]
             if out not in seen:

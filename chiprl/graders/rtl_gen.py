@@ -1,4 +1,5 @@
 """RTL-generation grader: a sequence of gates. Infra errors return reward None (excluded), never 0."""
+
 from __future__ import annotations
 
 import dataclasses
@@ -14,7 +15,7 @@ from ..tools.sim import simulate
 @dataclasses.dataclass
 class R:
     reward: float | None
-    stage: str                       # lint | compile | sim | samples | ok | infra
+    stage: str  # lint | compile | sim | samples | ok | infra
     detail: dict = dataclasses.field(default_factory=dict)
 
 
@@ -36,12 +37,14 @@ def reference_samples(task: Task) -> int | None:
     return _REF_SAMPLES[key]
 
 
-def grade_rtl(sub_rtl: str, task: Task, workdir: Path | None = None, equiv_bonus: bool = True,
-              dense: bool = False) -> R:
+def grade_rtl(
+    sub_rtl: str, task: Task, workdir: Path | None = None, equiv_bonus: bool = True, dense: bool = False
+) -> R:
     """dense=False: binary pass (VerilogEval semantics). dense=True: pass_frac shaping."""
     own = workdir is None
     tmp = tempfile.TemporaryDirectory(prefix="chiprl_") if own else None
     wd = Path(tmp.name) if tmp else workdir
+    assert wd is not None
     try:
         sub = wd / "dut.sv"
         sub.write_text(sub_rtl)
