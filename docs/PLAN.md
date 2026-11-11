@@ -56,6 +56,8 @@ ML task. The learning path below is weighted toward those.
 - [x] One VerilogEval task through lint, sim, equiv, synth, gate-sim, power
 - [x] Golden tests: ref 1.1, 35/36 mutants killed (1 equivalent), empty 0, constant 0, 3 hacks blocked
 - [ ] OpenSTA backend verified in Docker on my machine; record proxy vs OpenSTA on the 4 fixtures
+- [ ] LibreLane slow path (Python Steps API) on the 4 fixtures: post-route area, WNS, power
+- [ ] Swap frontend to yosys-slang, equivalence to eqy, add Verilator --timing sim backend
 - [ ] Load 100 VerilogEval v2 tasks; family tags; train/val split; decontam manifest (n-gram overlap vs CVDP)
 - [ ] pass@1 / pass@5 table for 2 to 3 models (one small open model via vLLM or API, one frontier)
 
@@ -69,8 +71,8 @@ ML task. The learning path below is weighted toward those.
 
 ### Phase 3: baselines (Dec 1 to Dec 7)
 - zero-shot; scaffold (plan, edit, lint, sim, fix; K turns); best-of-N with grader selection at
-  N = 4/16/64 (the bar RL must beat at matched samples); frontier model ceiling; Optuna TPE over
-  Yosys/ABC knobs as the non-LLM PPA baseline.
+  N = 4/16/64 (the bar RL must beat at matched samples); frontier model ceiling; OpenROAD AutoTuner
+  (Ray Tune) over Yosys/OpenROAD knobs as the non-LLM PPA baseline.
 
 ### Phase 4: training (Dec 8 to Dec 21), 1 to 2 rented GPUs, budget about $200 to $400
 - Rejection-sampling SFT on best-of-N successes (LoRA, Qwen-class 1.5B to 7B coder).

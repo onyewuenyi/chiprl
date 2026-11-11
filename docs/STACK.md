@@ -8,12 +8,15 @@ use, and what is open and available to me.
 | Layer | Pick | Notes |
 |---|---|---|
 | Front-end bundle | **OSS CAD Suite** (YosysHQ nightly) | Native darwin-arm64. Yosys, eqy, SBY, Icarus, Verilator, cocotb in one pinned dated tarball. Same tag in CI. |
-| Simulation | Icarus (VerilogEval tbs), Verilator 5 (speed) | Verilator for throughput once tbs are cocotb |
+| SV frontend | **yosys-slang** | Full SystemVerilog for Yosys; `read_verilog -sv` is partial. Fallback kept for apt Yosys |
+| Simulation | Icarus (VerilogEval tbs today), **Verilator 5 `--timing`** | Verilator runs event-driven tbs and is the throughput path |
 | Testbenches | **cocotb 2.0** | 2.0 released Nov 2025; breaking API, so start on 2.x |
-| Formal / equivalence | Yosys `equiv_*` now, **eqy** + **SBY** in Phase 2 | eqy partitions; SBY for SVA properties in the DV env |
+| Formal / equivalence | **eqy** + **SBY** (replacing the hand-written `equiv_*` script) | eqy partitions; SBY for SVA properties in the DV env |
 | STA + power | **OpenSTA** (`read_vcd`, `report_power`) | Built natively for arm64 in `docker/Dockerfile`; called through `scripts/bin/sta` |
-| Place and route | **OpenROAD** via **LibreLane** (OpenLane 2 successor, FOSSi, Aug 2025) or ORFS | Phase 5 ground truth only; too slow for the RL loop |
-| PDK | Sky130 HD (vendored liberty + cell models); **ciel** to manage full PDKs | GF180 / IHP SG13G2 as a second PDK for generalization |
+| Place and route | **OpenROAD** via **LibreLane** (OpenLane 2 successor, FOSSi, Aug 2025), used as a Python library of Steps | Adopted now as the slow ground-truth path on a ~10% audit slice; minutes per design, so never in the inner loop |
+| Flow tuning baseline | **OpenROAD AutoTuner** (Ray Tune) | Non-LLM PPA baseline instead of hand-rolled Optuna |
+| Waveforms | **Surfer** | Modern GTKWave replacement for debugging |
+| PDK | Sky130 HD (vendored liberty + cell models); **ciel** (volare successor) to manage full PDKs | GF180 / IHP SG13G2 as a second PDK for generalization |
 
 ## Python and engineering
 | Concern | Pick |
@@ -43,3 +46,7 @@ use, and what is open and available to me.
 - Hydra CLI magic before there are enough configs to justify it.
 - Ray before a single-node process pool is the bottleneck.
 - Commercial EDA. Everything must be reproducible by a reviewer.
+
+## Two-speed evaluation
+- Fast path, every rollout (~1-2 s): lint, sim, Yosys/ABC, gate-level sim, OpenSTA or proxy power.
+- Slow path, sampled (~minutes): LibreLane post-route area, WNS, power with parasitics. Feeds the proxy study and Goodhart-drift audits from Phase 1 on.
