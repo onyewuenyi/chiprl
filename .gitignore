@@ -9,3 +9,7 @@ wandb/
 third_party/sky130/*.chiprl.lib
 third_party/sky130/*.tmp
 .ruff_cache/
+.env
+.env.*
+*.key
+secrets/

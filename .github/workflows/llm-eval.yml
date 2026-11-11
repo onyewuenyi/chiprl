@@ -1,0 +1,39 @@
+name: llm-eval
+# Spends money. Manual only, protected environment with a required reviewer.
+on:
+  workflow_dispatch:
+    inputs:
+      mode: {type: choice, options: [zero_shot, agent], default: zero_shot}
+      n: {type: string, default: "1"}
+      max_usd: {type: string, default: "2"}
+permissions: {contents: read, id-token: write}  # id-token: GitHub OIDC for Claude WIF
+jobs:
+  eval:
+    runs-on: ubuntu-24.04
+    environment: llm-evals
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - uses: YosysHQ/setup-oss-cad-suite@v4
+      - uses: astral-sh/setup-uv@v10
+      - run: uv sync --locked --extra llm
+      - name: GitHub OIDC token for Claude Workload Identity Federation (no stored API key)
+        run: |
+          curl -sSf -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://api.anthropic.com" | jq -r .value > "$RUNNER_TEMP/oidc.jwt"
+      - name: eval
+        env:  # inputs go through env, never interpolated into the script (injection-safe)
+          # Identifiers, not secrets: stored as repository variables. The SDK exchanges the OIDC
+          # token for a short-lived Claude token scoped to the chiprl workspace.
+          ANTHROPIC_FEDERATION_RULE_ID: ${{ vars.ANTHROPIC_FEDERATION_RULE_ID }}
+          ANTHROPIC_ORGANIZATION_ID: ${{ vars.ANTHROPIC_ORGANIZATION_ID }}
+          ANTHROPIC_SERVICE_ACCOUNT_ID: ${{ vars.ANTHROPIC_SERVICE_ACCOUNT_ID }}
+          ANTHROPIC_IDENTITY_TOKEN_FILE: ${{ runner.temp }}/oidc.jwt
+          MODE: ${{ inputs.mode }}
+          N: ${{ inputs.n }}
+          MAX_USD: ${{ inputs.max_usd }}
+        run: >
+          uv run python -m chiprl.llm.evals --tasks tests/fixtures/verilogeval
+          --mode "$MODE" --n "$N" --k 1 --max-usd "$MAX_USD"
+      - uses: actions/upload-artifact@v7
+        with: {name: eval-run, path: runs/}

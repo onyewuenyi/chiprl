@@ -69,7 +69,10 @@ ML task. The learning path below is weighted toward those.
 - [ ] Docker sandbox: `--network none`, read-only grader mounts, non-root, rlimits
 - [ ] Throughput benchmark + CI badge
 
-### Phase 3: baselines (Dec 1 to Dec 7)
+### Phase 3: baselines (Dec 1 to Dec 7), code landed Nov 11
+- [x] Claude zero-shot + tool-using agent baselines, pass@k + CIs, cost caps, JSONL trajectories
+- [x] Best-of-N through Message Batches; reward-hack auditor
+- [ ] First paid run on the 4 fixtures (~$1 to $3), then 100 VerilogEval tasks
 - zero-shot; scaffold (plan, edit, lint, sim, fix; K turns); best-of-N with grader selection at
   N = 4/16/64 (the bar RL must beat at matched samples); frontier model ceiling; OpenROAD AutoTuner
   (Ray Tune) over Yosys/OpenROAD knobs as the non-LLM PPA baseline.

@@ -10,6 +10,10 @@ Each entry has a regression test in `tests/test_golden.py`.
 | 3 | 2026-11-11 | red-team | define `module RefModule` in the submission | shadow the golden model so DUT and ref agree | reserved module names rejected at lint | `test_hack_shadow_refmodule` |
 | 4 | 2026-11-11 | design | dense `pass_frac` reward on a counter that is right 95% of cycles | partial credit for nearly-right sequential logic is a gradient toward plausible-but-wrong RTL | binary pass is the primary reward; `pass_frac` only behind a config flag | `configs/env/rtl_gen.yaml` |
 
+## Automated triage
+`chiprl.llm.auditor` reads every passing trajectory and returns {verdict, category, evidence,
+confidence}. Anything not `legitimate` gets a hand look; confirmed hacks become rows above.
+
 ## Expected next (PPA env)
 - Power reward on a fixed stimulus overfits to that stimulus (e.g. logic that idles on patterns the tb never drives). Block: score power on held-out vectors as well, and gate on `eqy`.
 - Deleting logic whose outputs the tb does not observe. Block: `eqy` equivalence gate, not just sim.

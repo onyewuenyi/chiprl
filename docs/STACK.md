@@ -34,7 +34,9 @@ use, and what is open and available to me.
 ## LLM and RL (Phase 3+)
 | Concern | Pick |
 |---|---|
-| Frontier baselines | Claude (Anthropic API, Agent SDK for the tool-using scaffold) and OpenAI API, same tool interface |
+| Frontier baselines | Claude Opus 5.5 via `anthropic` SDK 2.8: adaptive thinking, explicit effort, strict tools, prompt caching, server-side refusal fallbacks, structured outputs, Message Batches (50%) |
+| Agent-in-CI | `anthropics/claude-code-action@v1` with Workload Identity Federation |
+| Secrets | `ant auth login` (OAuth) locally, Keychain fallback, WIF in CI, gitleaks pre-commit |
 | Local small-model iteration | MLX-LM on the Mac for 0.5B to 3B sanity runs |
 | Rollout inference | vLLM (SGLang as alternative) on the GPU service |
 | RL | **verl** (multi-turn tool rollouts, GRPO/DAPO built in) or TRL `GRPOTrainer` for the first run |

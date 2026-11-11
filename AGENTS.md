@@ -24,6 +24,11 @@ The reward is only as good as the grader, so grader correctness beats everything
 8. Python 3.12+, typed, ruff-clean. No new runtime dependencies on the Mac path without a reason;
    GPU/training deps belong in the GPU service image.
 9. LibreLane (`--pnr`) is the slow ground-truth path. Never call it from a reward function.
+10. Claude API code lives in `chiprl/llm`. Credentials only via `auth.make_client()` (ambient chain,
+    never a key argument). Every entry point that calls the API takes a required `--max-usd`.
+    Never run a paid eval without the user's go-ahead; tests use the fake client in tests/test_llm.py.
+11. The env (`chiprl/envs/rtl_env.py`) is the only surface a policy sees. Do not add tool outputs that
+    reveal the testbench, reference, or reward.
 
 ## Layout
 `chiprl/tools` (tool wrappers), `chiprl/graders` (gated graders, mutants), `chiprl/tasks` (loaders),

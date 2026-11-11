@@ -19,6 +19,19 @@ uv run python -m chiprl.pipeline tests/fixtures/verilogeval/Prob068_countbcd --p
 uv run python -m chiprl.pipeline <task_dir> --rtl my_submission.sv
 ```
 
+## Claude in the loop
+
+| Feature | Command | What it gives you |
+|---|---|---|
+| Frontier baseline, zero-shot | `make eval-smoke` | pass@k with bootstrap CIs, cost, JSONL trajectories |
+| Tool-using agent baseline | `make agent-smoke` | Claude drives lint / simulate / synth_report / submit through the same env RL will use |
+| Best-of-N via Message Batches | `python -m chiprl.llm.batch submit --n 16` | 50%-price sampling; oracle pass@N vs deployable visible-signal BoN |
+| Reward-hack auditor | `python -m chiprl.llm.auditor runs/<run>/trajectories.jsonl --max-usd 2` | second model flags passes that look like hacks; feeds docs/hack_log.md |
+| Claude Code on GitHub | `@claude` on issues/PRs; auto review of reward-path PRs | reviews focused on grader integrity, auth via OIDC federation |
+
+Credentials: `ant auth login` locally, Workload Identity Federation in CI, no static keys in the
+repo or GitHub. Every run takes a hard `--max-usd` cap. Details in [docs/SECURITY.md](docs/SECURITY.md).
+
 ## Pipeline
 
 ```

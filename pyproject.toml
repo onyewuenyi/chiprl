@@ -10,8 +10,9 @@ dependencies = []
 [project.optional-dependencies]
 # Phase 2+: cocotb testbenches, typed tool schemas
 dv = ["cocotb>=2.1"]
-# Phase 3+: inference, tracking. GPU training deps live on the GPU service image, not on the Mac.
-llm = ["openai>=1.0", "anthropic>=0.40", "wandb>=0.19"]
+# Claude-in-the-loop: agent baseline, evals, best-of-N batches, hack auditor.
+# GPU training deps live on the GPU service image, not on the Mac.
+llm = ["anthropic>=2.8", "pydantic>=2.9"]
 pd = [
     "librelane>=3.0.17",
 ]
