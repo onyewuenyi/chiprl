@@ -8,6 +8,7 @@ The reward is only as good as the grader, so grader correctness beats everything
 - `make check`: ruff lint + format check, ty typecheck, pytest (parallel)
 - `make smoke`: one VerilogEval task end to end, prints JSON
 - `uv run python -m chiprl.pipeline <task_dir> [--rtl sub.sv] [--power-backend proxy|opensta] [--pnr]`
+- `make bench` / `make bench-ray`: graded rollouts/s and p50/p95; `make db`: DuckDB views over runs/
 - `CHIPRL_SIM_BACKEND=verilator` switches RTL sim to Verilator --timing (gate-level stays on Icarus)
 
 ## Rules
@@ -29,6 +30,8 @@ The reward is only as good as the grader, so grader correctness beats everything
     Never run a paid eval without the user's go-ahead; tests use the fake client in tests/test_llm.py.
 11. The env (`chiprl/envs/rtl_env.py`) is the only surface a policy sees. Do not add tool outputs that
     reveal the testbench, reference, or reward.
+12. Scale-up layers (Ray, W&B, DuckDB, SkyPilot) live in the `scale` extra and are optional. The
+    local path must keep working without them. LLM API calls never go through Ray.
 
 ## Layout
 `chiprl/tools` (tool wrappers), `chiprl/graders` (gated graders, mutants), `chiprl/tasks` (loaders),

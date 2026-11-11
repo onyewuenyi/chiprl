@@ -16,6 +16,11 @@ llm = ["anthropic>=2.8", "pydantic>=2.9"]
 pd = [
     "librelane>=3.0.17",
 ]
+scale = [
+    "duckdb>=1.1",
+    "ray>=2.40",
+    "wandb>=0.19",
+]
 
 [dependency-groups]
 dev = ["pytest>=9.2", "pytest-xdist>=3.8", "ruff>=0.17", "ty>=0.0.101", "pre-commit>=4.7"]

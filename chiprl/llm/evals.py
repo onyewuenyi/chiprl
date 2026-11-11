@@ -56,6 +56,29 @@ def summarize(results: dict[str, list[float | None]], ks: list[int]) -> dict:
     return out
 
 
+def log_wandb(run_dir: Path, summary: dict, results: dict[str, list[float | None]]) -> None:
+    """Optional experiment tracking. Same run name as the local dir, so the two stay joinable."""
+    import wandb
+
+    run = wandb.init(
+        project="chiprl",
+        name=run_dir.name,
+        job_type="eval",
+        config={k: summary[k] for k in ("mode", "model", "effort", "n")},
+    )
+    flat = {f"{k}/mean": v["mean"] for k, v in summary["metrics"].items() if isinstance(v, dict)}
+    run.log({**flat, "cost/usd": summary["cost"]["spent_usd"]})
+    table = wandb.Table(columns=["task_id", "sample", "reward"])
+    for tid, rewards in results.items():
+        for i, r in enumerate(rewards):
+            table.add_data(tid, i, r)
+    run.log({"per_task": table})
+    art = wandb.Artifact(f"traj-{run_dir.name}", type="trajectories")
+    art.add_file(str(run_dir / "trajectories.jsonl"))
+    run.log_artifact(art)
+    run.finish()
+
+
 def load_tasks(path: Path, limit: int | None) -> list[Task]:
     if any(path.glob("*_prompt.txt")):
         return load_verilogeval_dataset(path, limit)
@@ -75,6 +98,7 @@ def main(argv=None) -> int:
     ap.add_argument("--max-usd", type=float, required=True, help="hard spend cap for this run")
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--out", type=Path, default=Path("runs"))
+    ap.add_argument("--wandb", action="store_true", help="log to Weights & Biases (needs `wandb login`)")
     a = ap.parse_args(argv)
 
     tasks = load_tasks(a.tasks, a.limit)
@@ -112,6 +136,8 @@ def main(argv=None) -> int:
         "stopped": stopped,
     }
     (run_dir / "summary.json").write_text(json.dumps(summary, indent=2))
+    if a.wandb:
+        log_wandb(run_dir, summary, results)
     print(json.dumps(summary, indent=2))
     return 0 if stopped is None else 3
 

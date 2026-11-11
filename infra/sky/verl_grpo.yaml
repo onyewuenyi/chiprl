@@ -1,0 +1,36 @@
+# GPU path: one SkyPilot task runs on whichever cloud has capacity (RunPod, Lambda, GCP, AWS, ...).
+#   sky launch -c chiprl-rl infra/sky/verl_grpo.yaml --env MODEL=Qwen/Qwen2.5-Coder-1.5B-Instruct
+#   sky down chiprl-rl            # always tear down; autostop below is the backstop
+# verl runs on Ray, so the grader fans out on the same cluster (CHIPRL_BACKEND=ray).
+# Not run yet: Phase 4 (Dec 8+). Pin the verl and image versions when the first run happens.
+name: chiprl-grpo
+
+resources:
+  accelerators: {H100:1, A100-80GB:1, L40S:1}   # first available wins
+  disk_size: 200
+  autostop: 30m
+
+envs:
+  MODEL: Qwen/Qwen2.5-Coder-1.5B-Instruct
+  CHIPRL_BACKEND: ray
+  WANDB_PROJECT: chiprl
+  # WANDB_API_KEY and HF_TOKEN come from `sky launch --secret WANDB_API_KEY --secret HF_TOKEN`,
+  # never from this file.
+
+workdir: .
+
+setup: |
+  set -euo pipefail
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  export PATH="$HOME/.local/bin:$PATH"
+  sudo apt-get update -qq && sudo apt-get install -y -qq yosys iverilog verilator
+  uv sync --extra scale
+  uv pip install "verl[vllm]"
+
+run: |
+  set -euo pipefail
+  export PATH="$HOME/.local/bin:$PATH"
+  # Grader throughput sanity check on this node before spending GPU hours.
+  uv run --extra scale python -m chiprl.runtime.bench --backend ray --reps 4
+  # Phase 4 entry point (not written yet): GRPO with chiprl's RTLGenEnv as the multi-turn tool env.
+  # uv run python -m chiprl.train.grpo model=$MODEL

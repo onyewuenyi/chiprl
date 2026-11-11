@@ -67,7 +67,8 @@ ML task. The learning path below is weighted toward those.
 - [ ] 20 power-family tasks (point 5 above)
 - [ ] Multi-turn tool API: lint, sim, synth_report, power_report, submit (JSON only)
 - [ ] Docker sandbox: `--network none`, read-only grader mounts, non-root, rlimits
-- [ ] Throughput benchmark + CI badge
+- [x] Throughput benchmark (`make bench`, local vs Ray); CI badge pending
+- [x] Scale-up layer: Ray executor, DuckDB over runs, W&B logging, SkyPilot GPU recipe
 
 ### Phase 3: baselines (Dec 1 to Dec 7), code landed Nov 11
 - [x] Claude zero-shot + tool-using agent baselines, pass@k + CIs, cost caps, JSONL trajectories

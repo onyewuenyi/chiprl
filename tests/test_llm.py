@@ -136,3 +136,39 @@ def test_pass_at_k_and_summary():
     assert pass_at_k(4, 1, 1) == pytest.approx(0.25) and pass_at_k(4, 1, 4) == 1.0
     s = summarize({"a": [1.0, 0.0, None], "b": [0.0, 0.0, 0.0]}, [1])
     assert s["pass@1"]["mean"] == pytest.approx(0.25) and s["infra_excluded"] == 1
+
+
+def test_duckdb_views_over_runs(tmp_path):
+    duckdb = pytest.importorskip("duckdb")
+    from chiprl.analysis.db import connect
+
+    run = tmp_path / "20261111-zero_shot"
+    run.mkdir()
+    rows = [
+        {"task_id": "a", "mode": "zero_shot", "reward": 1.1, "events": []},
+        {"task_id": "b", "mode": "zero_shot", "reward": 0.0, "events": []},
+    ]
+    (run / "trajectories.jsonl").write_text("\n".join(json.dumps(r) for r in rows))
+    (run / "summary.json").write_text(
+        json.dumps(
+            {
+                "mode": "zero_shot",
+                "model": "m",
+                "effort": "high",
+                "n": 1,
+                "cost": {"spent_usd": 0.5, "calls": 2},
+            }
+        )
+    )
+    con = connect(tmp_path)
+    assert con.execute(
+        "select count(*), sum(CASE WHEN reward >= 1 THEN 1 ELSE 0 END) from traj"
+    ).fetchone() == (2, 1)
+    assert con.execute("select usd from costs").fetchone()[0] == 0.5
+    assert duckdb is not None
+
+
+def test_pmap_local_preserves_order():
+    from chiprl.runtime.executor import pmap
+
+    assert pmap(lambda x: x * x, range(20), backend="local") == [x * x for x in range(20)]

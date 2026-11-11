@@ -70,3 +70,27 @@ use, and what is open and available to me.
 | Python | 3.12 | 3.12 kept | GPU stack (torch, vLLM, verl) is most reliable on 3.12 |
 
 Not adopted, on purpose: synlig (superseded by yosys-slang), OpenLane 2 (superseded by LibreLane), volare (superseded by ciel).
+
+## Frontier-lab alignment and scale-up (Nov 11 2026)
+
+Rule: adopt a layer when a measured bottleneck asks for it, not before. Claims about internal lab
+stacks are hedged to what is public.
+
+| Layer | Pick | Lab alignment (public evidence) | Adopt when |
+|---|---|---|---|
+| Fan-out | thread pool -> **Ray** (`chiprl/runtime/executor.py`, `CHIPRL_BACKEND=ray`) | OpenAI has said it used Ray to train ChatGPT-era models; verl, OpenRLHF and SkyRL all run on Ray | Now as a flag. Default when grading is the RL bottleneck or goes multi-node |
+| Rollout + RL | **vLLM** + **verl** (TRL fallback) | Most open RL-for-LLM reproductions (DAPO, VerlTool, ChipSeek-style work) | Phase 4 |
+| GPU provisioning | **SkyPilot** (`infra/sky/verl_grpo.yaml`) over RunPod/Lambda; **Modal** for short bursty jobs | SkyPilot is the common open multi-cloud launcher and ships a verl example | First GPU run |
+| Tracking | **Weights & Biases** (`evals --wandb`) | Widely used at OpenAI and across RL labs | First paid eval |
+| Run data | JSONL per run -> **DuckDB** views + Parquet export (`chiprl/analysis/db.py`) | Columnar files + SQL is the standard pattern; scales to many GB on one laptop | Now |
+| Warehouse | BigQuery or ClickHouse | Only if data outgrows one machine | Probably never for this project |
+| Cluster | KubeRay on k8s | How Ray runs in production at large orgs | Only with a persistent multi-node cluster |
+| LLM | Anthropic SDK (Claude Opus 5.5), OpenAI SDK for a second frontier baseline | The labs' own APIs | Now / Phase 3 |
+
+Not adopted: **Metaflow** (Netflix/Outerbounds ML workflow orchestration; good tool, but not what RL
+infra at frontier labs is known to run, and Ray + SkyPilot already cover scheduling here).
+Airflow/Kubeflow for the same reason.
+
+Measured (cloud box, 4 fixtures x 8 variants, `make bench`): local threads 21.6 graded rollouts/s,
+p50 0.08 s; Ray 10.8/s. At this scale Ray loses to worker startup and serialization. It pays off at
+thousands of rollouts per step or more than one node, which is exactly the Phase 4 regime.
