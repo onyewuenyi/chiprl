@@ -1,0 +1,4 @@
+# r = 1[correct] * clip((P_base - P_sub) / P_base, -1, 1)   (same for area / delay, weighted)
+weights: {power: 1.0, area: 0.0, delay: 0.0}
+clip: [-1.0, 1.0]
+infra_error: exclude     # never 0

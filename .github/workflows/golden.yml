@@ -1,0 +1,15 @@
+name: grader-golden-tests
+on: [push, pull_request]
+jobs:
+  golden:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y yosys iverilog verilator
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install pytest
+      - run: python -m pytest -q
+      - run: python -m chiprl.pipeline tests/fixtures/verilogeval/Prob068_countbcd --no-cache --out smoke.json
+      - uses: actions/upload-artifact@v4
+        with: {name: smoke-json, path: smoke.json}

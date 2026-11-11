@@ -1,0 +1,5 @@
+name: rtl_gen
+grader: rtl_gen
+dense: false          # binary pass is the primary reward; pass_frac is hackable shaping
+equiv_bonus: 0.1
+max_turns: 1

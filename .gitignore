@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+third_party/sky130/*.lib
+third_party/sky130/*.chiprl.json
+runs/
+wandb/
+*.vcd

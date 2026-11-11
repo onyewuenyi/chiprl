@@ -1,0 +1,15 @@
+[project]
+name = "chiprl"
+version = "0.1.0"
+description = "RL environments and graders for RTL generation, verification, and power-aware PPA optimization"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[tool.setuptools.packages.find]
+include = ["chiprl*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

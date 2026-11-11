@@ -1,0 +1,3 @@
+source: verilogeval_v2
+path: tests/fixtures/verilogeval
+k: [1, 5]

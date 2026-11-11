@@ -1,0 +1,7 @@
+name: ppa_power
+grader: ppa
+gates: [lint, hidden_tests, eqy]
+power_backend: opensta   # proxy for cheap rollouts, opensta for re-scored audit slice
+clock_period_ns: 10.0
+stimulus: {train: hidden_tb, audit: heldout_vectors}
+max_turns: 6
