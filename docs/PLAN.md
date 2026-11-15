@@ -95,13 +95,17 @@ ML task. The learning path below is weighted toward those.
 
 ## Learning path, weighted to my gaps
 
-| Week | Read | Do |
-|---|---|---|
-| Nov 11 | Spinning Up: VPG, PPO intuition | Phase 1; derive the REINFORCE gradient by hand |
-| Nov 18 | DeepSeekMath (GRPO) section 4; DAPO; Dr. GRPO | write a 50-line GRPO loss on a toy bandit |
-| Nov 25 | ChipSeek + VeriReason code end to end | map their reward code onto chiprl graders |
-| Dec 2 | VerlTool paper, verl multi-turn docs; TRL GRPOTrainer | run TRL GRPO on a 0.5B model on 10 tasks |
-| Dec 9 | SBY / eqy docs; CVDP paper | add SVA gate to the DV env |
+The learning path is now the experiment ladder in [EXPERIMENTS.md](EXPERIMENTS.md): 14
+first-principles experiments (E0 to E13), each answering one question with a reproducible artifact.
+The phases above are the build work those experiments pull in. Reading list, by rung:
+
+| Rung | Read |
+|---|---|
+| E1–E3 | Sky130 HD liberty for `edfxtp` / `dlclkp`; Yosys `dfflibmap` and `abc` docs; OpenSTA power docs |
+| E5–E7 | Spinning Up (VPG, PPO intuition); a contextual-bandit chapter (Lattimore & Szepesvári, ch. 18–19) |
+| E8 | DeepSeekMath section 4 (GRPO); DAPO; Dr. GRPO |
+| E9–E10 | ChipSeek + VeriReason code end to end; VerlTool; verl multi-turn docs; TRL GRPOTrainer |
+| E12 | SBY / eqy docs; CVDP paper |
 
 ## Interview artifacts this produces
 1. Hack log with regression tests (already 3 entries).

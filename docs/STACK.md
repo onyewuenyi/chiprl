@@ -53,6 +53,32 @@ use, and what is open and available to me.
 - Fast path, every rollout (~1-2 s): lint, sim, Yosys/ABC, gate-level sim, OpenSTA or proxy power.
 - Slow path, sampled (~minutes): LibreLane post-route area, WNS, power with parasitics. Feeds the proxy study and Goodhart-drift audits from Phase 1 on.
 
+## Where things run (measured Nov 13 2026, Apple M5 10-core, 24 GB)
+
+Decision: EDA fast path **native** (OSS CAD Suite darwin-arm64). Docker only for OpenSTA, OpenROAD
+and LibreLane, which have no macOS builds. Docker becomes the default on Linux cloud boxes, where
+it also sandboxes model-written RTL.
+
+| Component | Where | Measured |
+|---|---|---|
+| Yosys 0.70, Icarus 14, Verilator 5.055, eqy 0.71, SBY | native | `make test`: 46 tests in 10 s (1 real failure, see below) |
+| Fast path per task, proxy power | native | 1.0–1.9 s |
+| Fast path per task, OpenSTA power | native + Docker `sta` | 1.3–2.3 s (image is arm64, 7.5 GB) |
+| Throughput (`make bench`, 128 jobs) | native | 36.7 graded rollouts/s, p50 0.20 s, p95 0.60 s, 0 infra errors (cloud box: 21.6/s) |
+| Verilator `--timing` vs Icarus | native | 2.37 s vs 0.17 s sim on countbcd; Icarus stays default |
+| LibreLane RTL-to-GDS (countbcd) | Docker | 63 s, WNS +3.13 ns, 2814 instances incl. fill/tap. Needs a pty (see below) |
+| Small-model generation (MLX, Qwen2.5-Coder-1.5B 4-bit) | native | 116 tok/s single stream, 1.0 GB |
+| Claude API (E9) | API | spend, not hardware; `--max-usd` |
+| vLLM / verl / TRL+vLLM GRPO, 7B-class models (E10 at scale) | **cloud GPU** | CUDA only. 1–2× 80 GB GPUs via SkyPilot/Modal |
+
+OpenSTA vs proxy on the 4 fixtures (reference RTL, 100 MHz): 10.8 vs 3.0, 48.5 vs 8.1, 156.3 vs
+14.7, 24.8 vs 4.7 µW. Internal power (which the proxy omits) is 78% of countbcd's OpenSTA total.
+Area and depth also differ from the README's cloud numbers (countbcd 611.8 vs 628.1 µm², depth 8
+vs 6): a newer Yosys nightly, which is why the cache keys on tool versions.
+
+Problems found during this run (eqy false proof, LibreLane TTY, `ty` extras, exec bits) are tracked in
+[failure_log.md](failure_log.md).
+
 ## Audit, Nov 11 2026
 
 | Item | Was | Now | Status |

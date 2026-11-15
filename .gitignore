@@ -13,3 +13,4 @@ third_party/sky130/*.tmp
 .env.*
 *.key
 secrets/
+.envrc

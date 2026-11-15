@@ -87,4 +87,5 @@ docker/       arm64-native OpenSTA image
 scripts/      setup_mac.sh, bin/sta (Docker wrapper)
 ```
 
-See [docs/PLAN.md](docs/PLAN.md) for the roadmap.
+See [docs/PLAN.md](docs/PLAN.md) for the roadmap and [docs/EXPERIMENTS.md](docs/EXPERIMENTS.md)
+for the experiment ladder (E0 to E13) that drives it.
