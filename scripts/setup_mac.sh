@@ -10,9 +10,16 @@ mkdir -p "$PREFIX"
 
 command -v uv >/dev/null || { echo "install uv first: brew install uv"; exit 1; }
 
+WANT="${OSS_CAD_TAG:-$(cat "$ROOT/.oss-cad-suite-version")}"
+HAVE="$(cat "$PREFIX/oss-cad-suite/CHIPRL_TAG" 2>/dev/null || true)"
+if [ -x "$PREFIX/oss-cad-suite/bin/yosys" ] && [ "$HAVE" != "$WANT" ]; then
+  echo "OSS CAD Suite $HAVE installed, $WANT pinned: reinstalling"
+  rm -rf "$PREFIX/oss-cad-suite"
+fi
 if [ ! -x "$PREFIX/oss-cad-suite/bin/yosys" ]; then
-  TAG="${OSS_CAD_TAG:-$(git ls-remote --tags --refs https://github.com/YosysHQ/oss-cad-suite-build.git \
-        | awk -F/ '{print $3}' | grep -E '^20[0-9]{2}-[0-9]{2}-[0-9]{2}$' | sort | tail -1)}"
+  # Pinned: every machine and CI get the same Yosys, so rewards are comparable (failure_log #7).
+  # To upgrade, change .oss-cad-suite-version and the `version:` in .github/workflows/*.yml together.
+  TAG="${OSS_CAD_TAG:-$(cat "$ROOT/.oss-cad-suite-version")}"
   case "$(uname -s)-$(uname -m)" in
     Darwin-arm64) ARCH=darwin-arm64 ;;
     Darwin-x86_64) ARCH=darwin-x64 ;;

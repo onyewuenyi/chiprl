@@ -11,6 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: YosysHQ/setup-oss-cad-suite@v4
+        with: {version: "2026-11-12"}  # keep in sync with .oss-cad-suite-version
       - uses: astral-sh/setup-uv@v10
       - run: uv sync --locked --extra pd
       - run: echo "$GITHUB_WORKSPACE/scripts/bin" >> "$GITHUB_PATH"

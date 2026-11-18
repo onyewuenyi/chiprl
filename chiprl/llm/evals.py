@@ -9,19 +9,20 @@ Infra errors (reward None) are excluded from the denominator and reported separa
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import json
 import math
 import random
 import sys
-import time
 from pathlib import Path
 from typing import Any
 
+from ..runtime import manifest
 from ..runtime.executor import imap
 from ..tasks.task import Task, load_verilogeval_dataset, load_verilogeval_dir
 from .agent import AgentConfig, run_agent, run_zero_shot
 from .auth import make_client, redact
-from .costs import Budget, BudgetExceeded
+from .costs import Budget, BudgetExceeded, price
 
 
 def pass_at_k(n: int, c: int, k: int) -> float:
@@ -106,34 +107,60 @@ def main(argv=None) -> int:
     ap.add_argument("--k", type=int, nargs="+", default=[1])
     ap.add_argument("--model", default=AgentConfig.model)
     ap.add_argument("--effort", default="high")
-    ap.add_argument("--max-usd", type=float, required=True, help="hard spend cap for this run")
+    ap.add_argument(
+        "--seed", type=int, default=0, help="part of each job's identity; recorded in the manifest"
+    )
+    ap.add_argument("--max-usd", type=float, required=True, help="hard spend cap for this session")
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--out", type=Path, default=Path("runs"))
+    ap.add_argument(
+        "--resume", type=Path, help="run dir to continue: finished jobs are skipped, infra rows rerun"
+    )
     ap.add_argument("--wandb", action="store_true", help="log to Weights & Biases (needs `wandb login`)")
     a = ap.parse_args(argv)
 
     tasks = load_tasks(a.tasks, a.limit)
     cfg = AgentConfig(model=a.model, effort=a.effort)
+    config = {"mode": a.mode, **dataclasses.asdict(cfg)}
+    price(cfg.model)  # an unknown model would disable the cap: fail before any work
+    if a.resume:
+        run_dir = a.resume
+        old = json.loads((run_dir / manifest.MANIFEST).read_text())
+        new = manifest.build(old["run_id"], config, tasks, a.seed)
+        if reasons := manifest.compatible(old, new):
+            print(f"cannot resume {run_dir}: " + "; ".join(reasons))
+            return 5
+    else:
+        run_dir = a.out / manifest.new_run_id(a.mode)
+        run_dir.mkdir(parents=True, exist_ok=False)
+        m = manifest.build(run_dir.name, config, tasks, a.seed)
+        (run_dir / manifest.MANIFEST).write_text(json.dumps(m, indent=2))
+
+    traj_path = run_dir / manifest.TRAJ
+    manifest.repair_tail(traj_path)
+    done = {jid for jid, row in manifest.load_rows(traj_path).items() if row.get("reward") is not None}
+    jobs = [
+        (t, i, jid)
+        for t in tasks
+        for i in range(a.n)
+        if (jid := manifest.job_id(t, i, config, a.seed)) not in done
+    ]
     client = make_client()
     budget = Budget(max_usd=a.max_usd)
-    run_dir = a.out / time.strftime(f"%Y%m%d-%H%M%S-{a.mode}")
-    run_dir.mkdir(parents=True, exist_ok=True)
     fn = run_agent if a.mode == "agent" else run_zero_shot
-    results: dict[str, list[float | None]] = {t.task_id: [] for t in tasks}
-    jobs = [(t, i) for t in tasks for i in range(a.n)]
     stopped = None
     errors = 0
 
     def one(job):
-        t, _i = job
+        t, _i, _jid = job
         return fn(client, t, budget, cfg)
 
     # API calls stay on local threads (AGENTS rule 12). A job that raises becomes an infra row and
     # the run continues; only the spend cap stops it, and closing the stream cancels unstarted jobs.
-    with (run_dir / "trajectories.jsonl").open("w") as fh:
+    with traj_path.open("a") as fh:
         stream = imap(one, jobs, backend="local", workers=a.workers, max_in_flight=a.workers)
         for r in stream:
-            t, i = r.item
+            t, i, jid = r.item
             if isinstance(r.error, BudgetExceeded):
                 stopped = str(r.error)
                 stream.close()
@@ -150,19 +177,36 @@ def main(argv=None) -> int:
             else:
                 assert r.value is not None
                 traj = r.value
-            traj["sample"] = i
-            results[t.task_id].append(traj["reward"])
+            traj.update(sample=i, job_id=jid)
             fh.write(redact(json.dumps(traj, default=str)) + "\n")
             fh.flush()
+
+    # The summary is a pure function of the trajectory file, so a resumed run and an uninterrupted
+    # one produce the same numbers.
+    rows = manifest.load_rows(traj_path)
+    results: dict[str, list[float | None]] = {t.task_id: [] for t in tasks}
+    for row in sorted(rows.values(), key=lambda r: (r["task_id"], r["sample"])):
+        if row["task_id"] in results:
+            results[row["task_id"]].append(row["reward"])
+    prev = json.loads((run_dir / "summary.json").read_text()) if (run_dir / "summary.json").exists() else {}
+    session: dict[str, Any] = {"cost": budget.summary(), "stopped": stopped, "job_errors": errors}
+    sessions: list[dict[str, Any]] = [*prev.get("sessions", []), session]
     summary = {
+        "run_id": run_dir.name,
         "mode": a.mode,
         "model": a.model,
         "effort": a.effort,
         "n": a.n,
+        "jobs_total": len(tasks) * a.n,
+        "jobs_done": sum(r.get("reward") is not None for r in rows.values()),
         "metrics": summarize(results, a.k),
-        "cost": budget.summary(),
+        "cost": {
+            "spent_usd": round(sum(s["cost"]["spent_usd"] for s in sessions), 4),
+            "calls": sum(s["cost"]["calls"] for s in sessions),
+        },
         "stopped": stopped,
         "job_errors": errors,
+        "sessions": sessions,
     }
     (run_dir / "summary.json").write_text(json.dumps(summary, indent=2))
     if a.wandb:

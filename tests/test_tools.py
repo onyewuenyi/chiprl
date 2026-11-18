@@ -34,3 +34,18 @@ def test_equiv_backends_prove_reference(backend):
         assert fn(p, task.ref_rtl, task.top, Path(d)).metrics["proven"]
         p.write_text(task.ref_rtl.replace("RefModule", task.top).replace("state <= 1;", "state <= 2;"))
         assert not fn(p, task.ref_rtl, task.top, Path(d)).metrics["proven"]
+
+
+def test_toolchain_pin_is_consistent():
+    """Setup and every CI job install the same OSS CAD Suite build (docs/failure_log.md #7)."""
+    import re
+
+    root = Path(__file__).parents[1]
+    pin = (root / ".oss-cad-suite-version").read_text().strip()
+    assert re.fullmatch(r"20\d\d-\d\d-\d\d", pin)
+    for wf in sorted((root / ".github/workflows").glob("*.yml")):
+        text = wf.read_text()
+        if "setup-oss-cad-suite" in text:
+            assert re.findall(r'version: "([^"]+)"', text) == [pin] * text.count("setup-oss-cad-suite"), (
+                wf.name
+            )
