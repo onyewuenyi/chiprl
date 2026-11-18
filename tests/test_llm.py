@@ -199,3 +199,45 @@ def test_batch_submit_refuses_over_cap(monkeypatch, capsys):
     assert rc == 4 and "refusing" in capsys.readouterr().out
     with pytest.raises(SystemExit):  # --max-usd is required (AGENTS rule 10)
         batch.main(["submit", "--tasks", fix, "--n", "1"])
+
+
+class SpecClient:
+    """Zero-shot fake keyed on the task spec: returns the reference for every task except one, which raises."""
+
+    def __init__(self, refs: dict[str, str], explode_on: str, usd_cap_hit_after: int | None = None):
+        self.refs, self.explode_on = refs, explode_on
+        self.beta = SimpleNamespace(messages=SimpleNamespace(create=self._create))
+
+    def _create(self, **kw):
+        spec = kw["messages"][0]["content"]
+        if self.explode_on in spec:
+            raise ConnectionError("simulated network failure")
+        code = self.refs[spec]
+        return SimpleNamespace(
+            content=[Block(type="text", text=json.dumps({"code": code}))],
+            stop_reason="end_turn",
+            model=kw["model"],
+            usage=usage(),
+        )
+
+
+def test_eval_run_survives_a_failing_job(monkeypatch, tmp_path):
+    from chiprl.llm import evals
+
+    tasks = evals.load_tasks(FIX, None)
+    refs = {t.spec: t.ref_rtl.replace("RefModule", t.top) for t in tasks}
+    bad = tasks[0]
+    monkeypatch.setattr(evals, "make_client", lambda: SpecClient(refs, explode_on=bad.spec))
+    rc = evals.main(["--tasks", str(FIX), "--n", "2", "--max-usd", "5", "--out", str(tmp_path)])
+    assert rc == 0
+    [run] = list(tmp_path.iterdir())
+    rows = [json.loads(x) for x in (run / "trajectories.jsonl").read_text().splitlines()]
+    summary = json.loads((run / "summary.json").read_text())
+    assert len(rows) == 2 * len(tasks), "every job has a row, including the failed ones"
+    failed = [r for r in rows if r["task_id"] == bad.task_id]
+    assert all(
+        r["reward"] is None and r["stage"] == "infra" and "ConnectionError" in r["error"] for r in failed
+    )
+    assert summary["job_errors"] == 2 and summary["metrics"]["infra_excluded"] == 2
+    assert summary["metrics"]["pass@1"]["mean"] == pytest.approx(1.0)
+    assert summary["metrics"]["pass@1"]["mean_infra_as_fail"] == pytest.approx((len(tasks) - 1) / len(tasks))

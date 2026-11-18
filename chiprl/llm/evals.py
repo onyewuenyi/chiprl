@@ -14,9 +14,10 @@ import math
 import random
 import sys
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+from typing import Any
 
+from ..runtime.executor import imap
 from ..tasks.task import Task, load_verilogeval_dataset, load_verilogeval_dir
 from .agent import AgentConfig, run_agent, run_zero_shot
 from .auth import make_client, redact
@@ -121,17 +122,34 @@ def main(argv=None) -> int:
     results: dict[str, list[float | None]] = {t.task_id: [] for t in tasks}
     jobs = [(t, i) for t in tasks for i in range(a.n)]
     stopped = None
-    with (run_dir / "trajectories.jsonl").open("w") as fh, ThreadPoolExecutor(a.workers) as pool:
-        futs = {pool.submit(fn, client, t, budget, cfg): (t, i) for t, i in jobs}
-        for f in as_completed(futs):
-            t, i = futs[f]
-            try:
-                traj = f.result()
-            except BudgetExceeded as e:
-                stopped = str(e)
-                for g in futs:
-                    g.cancel()
-                continue
+    errors = 0
+
+    def one(job):
+        t, _i = job
+        return fn(client, t, budget, cfg)
+
+    # API calls stay on local threads (AGENTS rule 12). A job that raises becomes an infra row and
+    # the run continues; only the spend cap stops it, and closing the stream cancels unstarted jobs.
+    with (run_dir / "trajectories.jsonl").open("w") as fh:
+        stream = imap(one, jobs, backend="local", workers=a.workers, max_in_flight=a.workers)
+        for r in stream:
+            t, i = r.item
+            if isinstance(r.error, BudgetExceeded):
+                stopped = str(r.error)
+                stream.close()
+                break
+            if r.error is not None:
+                errors += 1
+                traj: dict[str, Any] = {
+                    "task_id": t.task_id,
+                    "mode": a.mode,
+                    "reward": None,
+                    "stage": "infra",
+                    "error": f"{type(r.error).__name__}: {r.error}"[:500],
+                }
+            else:
+                assert r.value is not None
+                traj = r.value
             traj["sample"] = i
             results[t.task_id].append(traj["reward"])
             fh.write(redact(json.dumps(traj, default=str)) + "\n")
@@ -144,6 +162,7 @@ def main(argv=None) -> int:
         "metrics": summarize(results, a.k),
         "cost": budget.summary(),
         "stopped": stopped,
+        "job_errors": errors,
     }
     (run_dir / "summary.json").write_text(json.dumps(summary, indent=2))
     if a.wandb:

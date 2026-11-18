@@ -20,6 +20,7 @@ import time
 from pathlib import Path
 
 from ..graders.rtl_gen import grade_rtl
+from ..runtime.executor import pmap
 from ..tools.lint import lint
 from ..tools.synth import synth
 from .agent import SYSTEM, ZERO_SHOT_SCHEMA, AgentConfig
@@ -131,12 +132,18 @@ def main(argv=None) -> int:
             oracle[tid].append(0.0)
             continue
         samples[tid].append((int(idx), code))
-    for tid, lst in samples.items():
-        for _idx, code in sorted(lst):
-            g = grade_rtl(code, tasks[tid])
-            oracle[tid].append(g.reward)
-            if tid not in visible_pick and visible_ok(code, tasks[tid].top):
-                visible_pick[tid] = g.reward
+    # Grade every sample in parallel (EDA only, no API calls). Infra results get one retry.
+    jobs = [(tid, idx, code) for tid, lst in samples.items() for idx, code in sorted(lst)]
+
+    def grade_one(job):
+        tid, _idx, code = job
+        return grade_rtl(code, tasks[tid]).reward, visible_ok(code, tasks[tid].top)
+
+    graded = pmap(grade_one, jobs, backend="local", retries=1, is_infra=lambda v: v[0] is None)
+    for (tid, _idx, _code), (reward, visible) in zip(jobs, graded, strict=True):
+        oracle[tid].append(reward)
+        if tid not in visible_pick and visible:  # jobs are in sample order per task
+            visible_pick[tid] = reward
     n = m["n"]
     bon = [1.0 if (visible_pick.get(t) or 0) >= 1.0 else 0.0 for t in tasks]
     out = {

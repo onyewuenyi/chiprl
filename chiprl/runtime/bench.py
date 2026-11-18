@@ -40,7 +40,9 @@ def main(argv=None) -> int:
         jobs += [(t, ref)] + [(t, m) for _, m in list(mutants(ref))[:7]]
     jobs *= a.reps
     t0 = time.time()
-    out = pmap(_job, jobs, backend=a.backend, workers=a.workers)
+    out = pmap(
+        _job, jobs, backend=a.backend, workers=a.workers, retries=1, is_infra=lambda o: o["reward"] is None
+    )
     wall = time.time() - t0
     lat = sorted(o["latency_s"] for o in out)
     res = {
