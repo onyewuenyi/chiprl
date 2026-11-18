@@ -6,11 +6,12 @@ Every tool returns a ToolResult that serializes to JSON. Raw logs are kept on di
 
 from __future__ import annotations
 
+import contextlib
 import dataclasses
 import json
 import os
-import resource
 import shutil
+import signal
 import subprocess
 import sys
 import time
@@ -44,14 +45,37 @@ def which(name: str) -> str | None:
     return shutil.which(name)
 
 
-def _limits(cpu_s: int, mem_mb: int):
-    def fn():
-        os.setsid()
-        resource.setrlimit(resource.RLIMIT_CPU, (cpu_s, cpu_s + 5))
-        if sys.platform.startswith("linux"):  # macOS does not enforce RLIMIT_AS
-            resource.setrlimit(resource.RLIMIT_AS, (mem_mb << 20, mem_mb << 20))
+TERM_GRACE_S = 2.0
 
-    return fn
+
+def _limit_prefix(cpu_s: int, mem_mb: int) -> list[str]:
+    """Apply rlimits in a shell that then execs the tool.
+
+    Not `preexec_fn`: Python documents it as unsafe in a multithreaded process, and the grader runs
+    many jobs on threads. CPU soft limit sends SIGXCPU, the hard limit 5 s later sends SIGKILL.
+    """
+    lines = [f"ulimit -Ht {cpu_s + 5}", f"ulimit -St {cpu_s}"]
+    if sys.platform.startswith("linux"):  # macOS does not enforce RLIMIT_AS
+        lines.append(f"ulimit -v {mem_mb << 10}")
+    return ["/bin/sh", "-c", "; ".join(lines) + '; exec "$@"', "chiprl-limits"]
+
+
+def _kill_group(p: subprocess.Popen) -> None:
+    """SIGTERM the whole process group, then SIGKILL whatever is left after a grace period.
+
+    TERM first so wrappers can clean up (the docker client stops its container on TERM); the group
+    so grandchildren die too (a shell wrapper's children would otherwise outlive the timeout).
+    """
+    for sig, wait_s in ((signal.SIGTERM, TERM_GRACE_S), (signal.SIGKILL, None)):
+        try:
+            os.killpg(p.pid, sig)
+        except ProcessLookupError:
+            return
+        if wait_s is None:
+            return
+        # Even if the leader exits here, its children may still be in the group: KILL follows.
+        with contextlib.suppress(subprocess.TimeoutExpired):
+            p.wait(timeout=wait_s)
 
 
 def run(
@@ -59,34 +83,46 @@ def run(
 ) -> tuple[int | None, str, float]:
     """Run cmd in cwd with rlimits. Returns (returncode or None on timeout, combined output, elapsed).
 
-    This is the in-process sandbox (rlimits + separate workdir). The Docker sandbox
-    (network none, read-only grader mounts) wraps this same call in envs/sandbox.py.
+    The tool runs in its own session (process group). On timeout the whole group is terminated, so
+    nothing it spawned keeps running. This is the in-process sandbox (rlimits + separate workdir).
     """
     t0 = time.time()
+    p = subprocess.Popen(
+        _limit_prefix(cpu_s, mem_mb) + cmd,
+        cwd=cwd,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        errors="replace",
+        start_new_session=True,
+    )
     try:
-        p = subprocess.run(
-            cmd,
-            check=False,
-            cwd=cwd,
-            capture_output=True,
-            text=True,
-            timeout=timeout_s,
-            preexec_fn=_limits(cpu_s, mem_mb),
-            errors="replace",
-        )
-        rc, out = p.returncode, p.stdout + p.stderr
-    except subprocess.TimeoutExpired as e:
+        out, _ = p.communicate(timeout=timeout_s)
+        rc: int | None = p.returncode
+    except subprocess.TimeoutExpired:
+        _kill_group(p)
+        try:
+            out, _ = p.communicate(timeout=TERM_GRACE_S + 3)
+        except subprocess.TimeoutExpired:  # a descendant still holds the pipe open
+            out = ""
+        out = (out or "") + "\n<TIMEOUT>"
         rc = None
-        out = (
-            (e.stdout or b"").decode(errors="replace") if isinstance(e.stdout, bytes) else (e.stdout or "")
-        ) + "\n<TIMEOUT>"
     elapsed = time.time() - t0
     (cwd / log_name).write_text(out)
     return rc, out, elapsed
 
 
 def tool_versions() -> dict[str, str]:
-    """Versions go into every cache key so a tool upgrade invalidates cached results."""
+    """Versions go into every cache key so a tool upgrade invalidates cached results.
+
+    Computed once per process (it runs each tool, and `sta` is a container start); returns a copy.
+    """
+    return dict(_tool_versions())
+
+
+@lru_cache(maxsize=1)
+def _tool_versions() -> dict[str, str]:
     out = {}
     for name, args in [
         ("yosys", ["-V"]),

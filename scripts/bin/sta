@@ -5,8 +5,12 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 TMP="${TMPDIR:-/tmp}"; TMP="${TMP%/}"
-LL_VER="$(cd "$ROOT" && uv run --extra pd -q python -c 'import librelane; print(librelane.__version__)' 2>/dev/null || echo 3.0.17)"
+# LibreLane version from the lockfile: no `uv run` per call (this wrapper runs once per graded design).
+LL_VER="$(awk '/^name = "librelane"$/{getline; gsub(/"/, "", $3); print $3; exit}' "$ROOT/uv.lock" 2>/dev/null)"
+LL_VER="${LL_VER:-3.0.17}"
 EXTRA=(); [ -d "$HOME/.ciel" ] && EXTRA=(-v "$HOME/.ciel:$HOME/.ciel:ro")
-exec docker run --rm -i --network none -u "$(id -u):$(id -g)" \
+# --init: a real PID 1 forwards the SIGTERM the docker client proxies on a grader timeout, so the
+# container stops instead of running on after the job was abandoned.
+exec docker run --rm -i --init --network none -u "$(id -u):$(id -g)" \
   -v "$PWD:$PWD" -v "$ROOT:$ROOT:ro" -v "$TMP:$TMP" -w "$PWD" ${EXTRA[@]+"${EXTRA[@]}"} \
   "${CHIPRL_EDA_IMAGE:-ghcr.io/librelane/librelane:$LL_VER}" sta "$@"
