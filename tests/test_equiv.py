@@ -89,8 +89,12 @@ def test_prover_that_proves_the_canary_is_ignored(monkeypatch):
         assert eq.eqy_sound() is False
         r = _run(eq.equiv_eqy, _ref(task), task)
         assert r.metrics["proven"] is False and r.metrics["verdict"] == "unknown"
-        # equiv() falls back to the yosys prover instead of trusting the unsound one
-        assert _run(eq.equiv, _ref(task), task).metrics["backend"] == "yosys_equiv"
+        # asked for eqy, equiv() falls back to the yosys prover instead of trusting the unsound one
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "dut.sv"
+            p.write_text(_ref(task))
+            r = eq.equiv(p, task.ref_rtl, task.top, Path(d), prover="eqy")
+        assert r.metrics["backend"] == "yosys_equiv" and r.metrics["proven"]
     finally:
         eq.eqy_sound.cache_clear()
 
@@ -109,3 +113,24 @@ def test_vacuous_bounded_check_is_unknown(monkeypatch):
     monkeypatch.setattr(eq, "run", run_then_break_liveness)
     r = _run(eq.equiv_bmc, _ref(task), task)
     assert r.metrics["verdict"] == "unknown" and r.metrics["live"] is False
+
+
+def test_bmc_depth_follows_reference_size():
+    assert eq.bmc_depth(0) == 1 and eq.bmc_depth(16) == eq.BMC_DEPTH
+    assert eq.bmc_depth(100) == 6 and eq.bmc_depth(256) == 2 and eq.bmc_depth(None) == 4
+    counter = load_verilogeval_dir(FIX / "Prob075_counter_2bc")
+    popcount = load_verilogeval_dir(FIX / "Prob009_popcount3")
+    assert eq.state_bits(counter.ref_rtl, counter.top) == 2
+    assert eq.state_bits(popcount.ref_rtl, popcount.top) == 0
+
+
+def test_eqy_prover_is_opt_in_and_agrees():
+    task = load_verilogeval_dir(FIX / "Prob075_counter_2bc")
+    if not eq.eqy_available():
+        pytest.skip("eqy not installed")
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d) / "dut.sv"
+        p.write_text(_ref(task))
+        assert eq.equiv(p, task.ref_rtl, task.top, Path(d)).metrics["backend"] == "yosys_equiv"
+        r = eq.equiv(p, task.ref_rtl, task.top, Path(d), prover="eqy")
+        assert r.metrics["backend"] == "eqy" and r.metrics["proven"]

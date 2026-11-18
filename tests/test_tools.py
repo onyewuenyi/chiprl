@@ -49,3 +49,15 @@ def test_toolchain_pin_is_consistent():
             assert re.findall(r'version: "([^"]+)"', text) == [pin] * text.count("setup-oss-cad-suite"), (
                 wf.name
             )
+
+
+DATASET = Path(__file__).parents[1] / "data/verilogeval_v2/dataset_spec-to-rtl"
+
+
+@pytest.mark.skipif(not DATASET.exists(), reason="run scripts/fetch_verilogeval.py")
+def test_full_dataset_loads_and_quarantine_applies():
+    from chiprl.tasks.task import QUARANTINE, load_verilogeval_dataset
+
+    tasks = load_verilogeval_dataset(DATASET)
+    assert len(tasks) == 155 and not {t.task_id for t in tasks} & set(QUARANTINE)
+    assert len(load_verilogeval_dataset(DATASET, include_quarantined=True)) == 156

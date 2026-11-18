@@ -78,11 +78,23 @@ def load_verilogeval_dir(d: Path) -> Task:
     )
 
 
-def load_verilogeval_dataset(dataset_dir: Path, limit: int | None = None) -> list[Task]:
+# Upstream tasks whose own reference cannot pass their own testbench. Excluded from every count;
+# reaching the grader with them would be scored as a model failure. Found by grading all 156
+# references (2026-11-18): 155 pass, this one fails to compile.
+QUARANTINE: dict[str, str] = {
+    "Prob099_m2014_q6c": "testbench connects ports Y2 and Y4, which the reference module does not have",
+}
+
+
+def load_verilogeval_dataset(
+    dataset_dir: Path, limit: int | None = None, include_quarantined: bool = False
+) -> list[Task]:
     """Upstream layout: dataset_spec-to-rtl/ProbNNN_name_{prompt.txt,ref.sv,test.sv}."""
     tasks = []
     for prompt in sorted(dataset_dir.glob("*_prompt.txt")):
         stem = prompt.name[: -len("_prompt.txt")]
+        if stem in QUARANTINE and not include_quarantined:
+            continue
         ref = (dataset_dir / f"{stem}_ref.sv").read_text()
         spec = prompt.read_text()
         tasks.append(
