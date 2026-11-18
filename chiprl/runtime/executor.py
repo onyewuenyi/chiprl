@@ -18,7 +18,7 @@ from typing import Any
 def _ray_map[T](fn: Callable[[Any], T], items: list[Any], cpus_per_job: float) -> Iterator[T]:
     # Under `uv run`, Ray tries to re-create the uv env in each worker; workers should reuse ours.
     os.environ.setdefault("RAY_ENABLE_UV_RUN_RUNTIME_ENV", "0")
-    import ray
+    import ray  # ty: ignore[import-not-found]  # optional `scale` extra
 
     if not ray.is_initialized():
         ray.init(address=os.environ.get("RAY_ADDRESS"), ignore_reinit_error=True, log_to_driver=False)

@@ -15,12 +15,20 @@ import time
 from pathlib import Path
 
 from . import cache
-from .graders.rtl_gen import grade_rtl
+from .graders.rtl_gen import grade_rtl, reference_samples
 from .tasks.task import Task, load_verilogeval_dir
 from .tools._run import tool_versions
 from .tools.power import power
 from .tools.sim import simulate
 from .tools.synth import synth
+
+
+def _synth_blamed_on_submission(task: Task) -> bool:
+    """Control for a synth timeout: if the reference synthesizes fine right now, the submission did it."""
+    with tempfile.TemporaryDirectory(prefix="chiprl_ctl_") as d:
+        ref = Path(d) / "dut.sv"
+        ref.write_text(task.ref_rtl.replace("RefModule", task.top))
+        return synth(ref, task.top, Path(d)).ok
 
 
 def run_task(
@@ -31,23 +39,47 @@ def run_task(
     period_ns: float = 10.0,
     use_cache: bool = True,
 ) -> dict:
+    """Grade, then measure PPA only for a design that passed every gate before it.
+
+    `gates` records each gate in order; a later gate is absent if an earlier one failed.
+    `infra_error` is True if any stage failed for a reason that is not the submission's fault;
+    such a result is never cached and its numbers must not be used.
+    """
     t0 = time.time()
-    ck = cache.key("pipeline/v2", task.content_hash(), sub_rtl, power_backend, str(period_ns))
+    ck = cache.key("pipeline/v3", task.content_hash(), sub_rtl, power_backend, str(period_ns))
     if use_cache and (hit := cache.get(ck)):
         return {**hit, "cache_hit": True}
-    out: dict = {"task_id": task.task_id, "family": task.family, "tool_versions": tool_versions()}
+    gates: dict[str, bool] = {}
+    out: dict = {
+        "task_id": task.task_id,
+        "family": task.family,
+        "tool_versions": tool_versions(),
+        "infra_error": False,
+        "gates": gates,
+        "ppa": None,
+    }
+
+    def done() -> dict:
+        out["elapsed_s"] = round(time.time() - t0, 3)
+        if use_cache and not out["infra_error"]:
+            cache.put(ck, out)
+        return out
+
     g = grade_rtl(sub_rtl, task, workdir)
     out["grade"] = {"reward": g.reward, "stage": g.stage, **g.detail}
-    if g.stage != "ok" or not g.reward or g.reward < 1.0:
-        out["ppa"] = None
-        out["elapsed_s"] = round(time.time() - t0, 3)
-        return out
+    out["infra_error"] = g.reward is None
+    gates["grade"] = g.stage == "ok" and g.reward is not None and g.reward >= 1.0
+    if not gates["grade"]:
+        return done()
+
     sub = workdir / "dut.sv"
     s = synth(sub, task.top, workdir)
     out["synth"] = s.to_dict()
+    gates["synth"] = s.ok
     if not s.ok:
-        out["ppa"] = None
-        return out
+        out["infra_error"] = s.infra_error or (s.timeout and not _synth_blamed_on_submission(task))
+        return done()
+
     # Gate-level sim on the same hidden stimulus: (1) post-synth functional check,
     # (2) full-netlist switching activity for power.
     gl = simulate(
@@ -61,8 +93,15 @@ def run_task(
         tag="glsim",
     )
     out["gate_sim"] = gl.to_dict()
+    if gl.infra_error:
+        out["infra_error"] = True
+        return done()
+    exp = reference_samples(task)
+    gates["glsim"] = bool(gl.ok and exp is not None and gl.metrics.get("samples") == exp)
+
+    # Power is only meaningful for a netlist that behaves like the RTL: no gate-level pass, no number.
     p = None
-    if gl.metrics.get("samples"):
+    if gates["glsim"]:
         p = power(
             Path(s.metrics["netlist"]),
             Path(s.metrics["netlist_json"]),
@@ -75,6 +114,8 @@ def run_task(
             backend=power_backend,
         )
         out["power"] = p.to_dict()
+        gates["power"] = p.ok
+        out["infra_error"] = p.infra_error
     out["ppa"] = {
         "area_um2": s.metrics["area_um2"],
         "cells": s.metrics["cells"],
@@ -82,13 +123,11 @@ def run_task(
         "logic_depth": s.metrics["logic_depth"],
         "power_w": p.metrics.get("total_w") if p and p.ok else None,
         "power_backend": p.metrics.get("backend") if p and p.ok else None,
-        "post_synth_sim_pass": gl.ok,
+        "post_synth_sim_pass": gates["glsim"],
         "clock_period_ns": period_ns,
+        "valid": all(gates.values()) and "power" in gates,
     }
-    out["elapsed_s"] = round(time.time() - t0, 3)
-    if use_cache:
-        cache.put(ck, out)
-    return out
+    return done()
 
 
 def main(argv=None) -> int:
@@ -119,7 +158,7 @@ def main(argv=None) -> int:
         import shutil
 
         shutil.rmtree(wd, ignore_errors=True)
-    return 0 if res["grade"]["reward"] is not None else 2
+    return 2 if res.get("infra_error") else 0
 
 
 if __name__ == "__main__":

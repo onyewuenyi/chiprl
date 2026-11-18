@@ -24,7 +24,7 @@ from ..tools.lint import lint
 from ..tools.synth import synth
 from .agent import SYSTEM, ZERO_SHOT_SCHEMA, AgentConfig
 from .auth import make_client
-from .costs import Budget
+from .costs import Budget, worst_case_usd
 from .evals import load_tasks, summarize
 
 
@@ -65,6 +65,9 @@ def main(argv=None) -> int:
     s.add_argument("--limit", type=int)
     s.add_argument("--n", type=int, default=16)
     s.add_argument("--effort", default="high")
+    s.add_argument(
+        "--max-usd", type=float, required=True, help="refuse to submit if the worst-case cost exceeds this"
+    )
     c = sub.add_parser("collect")
     c.add_argument("manifest", type=Path)
     c.add_argument("--max-usd", type=float, required=True)
@@ -74,7 +77,18 @@ def main(argv=None) -> int:
     if a.cmd == "submit":
         tasks = load_tasks(a.tasks, a.limit)
         cfg = AgentConfig(effort=a.effort)
-        batch = client.messages.batches.create(requests=build_requests(tasks, a.n, cfg))
+        reqs = build_requests(tasks, a.n, cfg)
+        # A batch is paid for once submitted, so the cap is checked here, not at collect time.
+        # Input size is estimated at 4 characters per token, with the system prompt counted per request.
+        in_tok = max((len(SYSTEM) + len(t.spec)) // 4 for t in tasks) if tasks else 0
+        worst = worst_case_usd(cfg.model, len(reqs), in_tok, cfg.max_tokens, batch=True)
+        if worst > a.max_usd:
+            print(
+                f"refusing: worst case ${worst:.2f} for {len(reqs)} requests exceeds --max-usd {a.max_usd:.2f}; "
+                "lower --n or --limit, or raise the cap"
+            )
+            return 4
+        batch = client.messages.batches.create(requests=reqs)
         manifest = Path("runs") / f"batch-{batch.id}.json"
         manifest.parent.mkdir(exist_ok=True)
         manifest.write_text(
@@ -84,6 +98,8 @@ def main(argv=None) -> int:
                     "tasks": str(a.tasks),
                     "n": a.n,
                     "model": cfg.model,
+                    "max_usd": a.max_usd,
+                    "worst_case_usd": round(worst, 4),
                     "created": time.time(),
                 }
             )

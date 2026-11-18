@@ -39,26 +39,36 @@ def bootstrap_ci(per_task: list[float], iters: int = 2000, seed: int = 0) -> tup
 
 
 def summarize(results: dict[str, list[float | None]], ks: list[int]) -> dict:
+    """pass@k over tasks. Infra rows (None) are excluded from `mean`.
+
+    `mean_infra_as_fail` counts them as failures instead. It is the floor a method cannot fall
+    below by getting rows excluded; a large gap between the two means the infra rate, not the
+    model, is driving the headline number.
+    """
     out: dict = {"tasks": len(results), "infra_excluded": 0}
     for k in ks:
-        per_task = []
+        per_task, floor = [], []
         for rewards in results.values():
             valid = [r for r in rewards if r is not None]
             out["infra_excluded"] += 0 if k != ks[0] else len(rewards) - len(valid)
+            passes = sum(r >= 1.0 for r in valid)
             if len(valid) >= k:
-                per_task.append(pass_at_k(len(valid), sum(r >= 1.0 for r in valid), k))
+                per_task.append(pass_at_k(len(valid), passes, k))
+            if len(rewards) >= k:
+                floor.append(pass_at_k(len(rewards), passes, k))
         lo, hi = bootstrap_ci(per_task)
         out[f"pass@{k}"] = {
             "mean": sum(per_task) / len(per_task) if per_task else None,
             "ci95": [lo, hi],
             "n_tasks": len(per_task),
+            "mean_infra_as_fail": sum(floor) / len(floor) if floor else None,
         }
     return out
 
 
 def log_wandb(run_dir: Path, summary: dict, results: dict[str, list[float | None]]) -> None:
     """Optional experiment tracking. Same run name as the local dir, so the two stay joinable."""
-    import wandb
+    import wandb  # ty: ignore[import-not-found]  # optional `scale` extra
 
     run = wandb.init(
         project="chiprl",

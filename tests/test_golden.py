@@ -115,3 +115,61 @@ def test_sim_backends_agree(backend):
             r = simulate(p, task.ref_rtl, task.testbench, Path(d), backend=backend)
             assert r.ok is want_ok, r
             assert r.metrics["samples"] == 39805
+
+
+# --- hack_log #5: crash to be excluded ------------------------------------------------------------
+# A submission that hangs or kills a tool must score 0, not None: rows with None are dropped by
+# evals, so None would let a policy raise its pass rate by crashing on hard tasks. A real infra
+# failure, where the reference fails under the same limits too, must still be None (AGENTS rule 3).
+
+
+def _killed():
+    from chiprl.tools._run import ToolResult
+
+    return ToolResult("sim", ok=False, infra_error=True, metrics={"killed_signal": 9})
+
+
+def test_hack_hang_is_scored_not_excluded(monkeypatch):
+    import functools
+
+    import chiprl.graders.rtl_gen as g
+    from chiprl.tools.sim import simulate
+
+    task = load_verilogeval_dir(FIX / "Prob035_count1to10")
+    monkeypatch.setattr(g, "simulate", functools.partial(simulate, timeout_s=4))
+    r = grade_rtl(_inject(task, "initial forever begin end"), task)
+    assert r.reward == 0.0 and r.stage == "timeout" and r.detail["blamed"] == "submission", r
+
+
+def test_hack_crash_is_scored_not_excluded(monkeypatch):
+    import chiprl.graders.rtl_gen as g
+
+    task = load_verilogeval_dir(FIX / "Prob035_count1to10")
+    real = g.simulate
+
+    def crash_on_marker(sub_path, *a, **k):
+        if "CHIPRL_CRASH" in Path(sub_path).read_text():
+            return _killed()
+        return real(sub_path, *a, **k)
+
+    monkeypatch.setattr(g, "simulate", crash_on_marker)
+    r = grade_rtl(_ref(task) + "\n// CHIPRL_CRASH\n", task)
+    assert r.reward == 0.0 and r.stage == "resource", r
+
+
+def test_resource_failure_with_failing_reference_is_infra(monkeypatch):
+    import chiprl.graders.rtl_gen as g
+
+    task = load_verilogeval_dir(FIX / "Prob035_count1to10")
+    monkeypatch.setattr(g, "simulate", lambda *a, **k: _killed())
+    r = grade_rtl(_ref(task), task)
+    assert r.reward is None and r.stage == "infra", r
+
+
+def test_functional_mismatch_has_stage_sim():
+    """A wrong answer is `sim`, never `ok`: failure reports sort by this label."""
+    task = load_verilogeval_dir(FIX / "Prob075_counter_2bc")
+    r = grade_rtl(_ref(task).replace("state <= 1;", "state <= 2;"), task)
+    assert r.reward == 0.0 and r.stage == "sim", r
+    dense = grade_rtl(_ref(task).replace("state <= 1;", "state <= 2;"), task, dense=True)
+    assert dense.stage == "sim" and dense.reward is not None and 0.0 <= dense.reward < 1.0, dense

@@ -24,9 +24,29 @@ class BudgetExceeded(RuntimeError):
     pass
 
 
-def usage_cost(model: str, usage: Any, batch: bool = False) -> float:
+class UnknownModelPrice(KeyError):
+    """A model id with no price would cost $0 and silently disable the spend cap."""
+
+
+def price(model: str) -> dict[str, float]:
     p = PRICES.get(model)
-    if p is None or usage is None:
+    if p is None:
+        raise UnknownModelPrice(f"no price for model {model!r}; add it to chiprl/llm/costs.py PRICES")
+    return p
+
+
+def worst_case_usd(
+    model: str, requests: int, input_tokens: int, max_tokens: int, batch: bool = False
+) -> float:
+    """Upper bound on spend before sending: every request uses all its output tokens, no cache hits."""
+    p = price(model)
+    usd = requests * (input_tokens * p["in"] * CACHE_WRITE_MULT + max_tokens * p["out"]) / 1e6
+    return usd * (BATCH_DISCOUNT if batch else 1.0)
+
+
+def usage_cost(model: str, usage: Any, batch: bool = False) -> float:
+    p = price(model)
+    if usage is None:
         return 0.0
     inp = getattr(usage, "input_tokens", 0) or 0
     out = getattr(usage, "output_tokens", 0) or 0

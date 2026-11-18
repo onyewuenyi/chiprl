@@ -103,8 +103,19 @@ def simulate(
         run_cmd = [vvp, "-n", f"{tag}.vvp"]
         build_timeout = 60
     rc, out, dt1 = run(build, workdir, f"{tag}_compile.log", timeout_s=build_timeout, mem_mb=8192)
+    # A timeout or a kill is a resource failure: possibly the machine, possibly the submission.
+    # It is reported as infra here; the grader decides who to blame with a reference control run.
     if rc is None:
-        return ToolResult(f"{tag}_compile", ok=False, infra_error=True, timeout=True)
+        return ToolResult(f"{tag}_compile", ok=False, infra_error=True, timeout=True, elapsed_s=dt1)
+    if rc < 0:
+        return ToolResult(
+            f"{tag}_compile",
+            ok=False,
+            infra_error=True,
+            elapsed_s=dt1,
+            metrics={"killed_signal": -rc},
+            diagnostics=[{"msg": f"compiler killed by signal {-rc}"}],
+        )
     if rc != 0:
         diags = [{"msg": ln.strip()[:200]} for ln in out.splitlines() if "error" in ln.lower()][:20]
         return ToolResult(
@@ -117,7 +128,8 @@ def simulate(
         )
     rc, out, dt2 = run(run_cmd, workdir, f"{tag}.log", timeout_s=timeout_s)
     if rc is None:
-        # wall-clock timeout of a DUT that hangs the simulator is behavior, not infra.
+        # A wall-clock timeout is usually a DUT that hangs the simulator (behavior), but on a loaded
+        # machine it can be infra. The grader settles it with a reference control run.
         return ToolResult(
             tag,
             ok=False,
@@ -131,6 +143,7 @@ def simulate(
             ok=False,
             infra_error=True,
             elapsed_s=dt1 + dt2,
+            metrics={"killed_signal": -rc},
             diagnostics=[{"msg": f"simulator killed by signal {-rc}"}],
         )
     m = [r for ln in out.splitlines() if ln.startswith(nonce) for r in _RESULT_RE.findall(ln)]

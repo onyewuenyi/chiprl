@@ -30,7 +30,7 @@ VIEWS = {
 
 
 def connect(root: Path = Path("runs")):
-    import duckdb
+    import duckdb  # ty: ignore[import-not-found]  # optional `scale` extra
 
     con = duckdb.connect()
     root = root.resolve()

@@ -172,3 +172,30 @@ def test_pmap_local_preserves_order():
     from chiprl.runtime.executor import pmap
 
     assert pmap(lambda x: x * x, range(20), backend="local") == [x * x for x in range(20)]
+
+
+def test_unknown_model_cannot_disable_the_cap():
+    from chiprl.llm.costs import UnknownModelPrice
+
+    with pytest.raises(UnknownModelPrice):
+        usage_cost("claude-opus-typo", usage(1_000_000, 0))
+    with pytest.raises(UnknownModelPrice):
+        Budget(max_usd=1.0).charge("claude-opus-typo", usage(10, 10))
+
+
+def test_batch_submit_refuses_over_cap(monkeypatch, capsys):
+    from chiprl.llm import batch
+
+    class NoSubmit:
+        class messages:
+            class batches:
+                @staticmethod
+                def create(**kw):
+                    raise AssertionError("must not submit a batch over the cap")
+
+    monkeypatch.setattr(batch, "make_client", NoSubmit)
+    fix = str(Path(__file__).parent / "fixtures/verilogeval")
+    rc = batch.main(["submit", "--tasks", fix, "--n", "64", "--max-usd", "0.5"])
+    assert rc == 4 and "refusing" in capsys.readouterr().out
+    with pytest.raises(SystemExit):  # --max-usd is required (AGENTS rule 10)
+        batch.main(["submit", "--tasks", fix, "--n", "1"])
