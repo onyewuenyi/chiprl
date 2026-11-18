@@ -129,6 +129,8 @@ def _tool_versions() -> dict[str, str]:
         ("iverilog", ["-V"]),
         ("verilator", ["--version"]),
         ("sta", ["-version"]),
+        ("eqy", ["--version"]),
+        ("sby", ["--version"]),
     ]:
         exe = which(name)
         if not exe:

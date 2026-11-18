@@ -21,7 +21,7 @@ import time
 from typing import Any
 
 from ..envs.rtl_env import TOOL_SPECS, RTLGenEnv
-from ..graders.rtl_gen import grade_rtl
+from ..graders.service import grade
 from ..tasks.task import Task
 from .auth import redact
 from .costs import Budget
@@ -112,7 +112,7 @@ def run_zero_shot(client, task: Task, budget: Budget, cfg: AgentConfig | None = 
             code = json.loads(text)["code"]
         except (json.JSONDecodeError, KeyError, TypeError):
             code = None
-    g = grade_rtl(code, task) if code else None
+    g = grade(code, task) if code else None
     traj.update(
         reward=g.reward if g else 0.0,
         stage=g.stage if g else f"no_code:{resp.stop_reason}",

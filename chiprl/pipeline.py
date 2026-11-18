@@ -46,7 +46,7 @@ def run_task(
     such a result is never cached and its numbers must not be used.
     """
     t0 = time.time()
-    ck = cache.key("pipeline/v3", task.content_hash(), sub_rtl, power_backend, str(period_ns))
+    ck = cache.key("pipeline/v4", task.content_hash(), sub_rtl, power_backend, str(period_ns))
     if use_cache and (hit := cache.get(ck)):
         return {**hit, "cache_hit": True}
     gates: dict[str, bool] = {}

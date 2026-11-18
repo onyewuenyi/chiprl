@@ -13,7 +13,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from ..graders.rtl_gen import grade_rtl
+from ..graders.service import grade
 from ..tasks.task import Task
 from ..tools.lint import lint
 from ..tools.sim import simulate
@@ -124,6 +124,6 @@ class RTLGenEnv:
     def submit(self, code: str) -> dict:
         if self.submitted is not None:
             return {"error": "already submitted"}
-        g = grade_rtl(code, self.task)
+        g = grade(code, self.task)
         self.submitted = {"code": code, "reward": g.reward, "stage": g.stage}
         return {"accepted": True}  # the reward is not revealed to the policy

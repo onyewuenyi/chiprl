@@ -19,7 +19,7 @@ import tempfile
 import time
 from pathlib import Path
 
-from ..graders.rtl_gen import grade_rtl
+from ..graders.service import grade
 from ..runtime.executor import pmap
 from ..tools.lint import lint
 from ..tools.synth import synth
@@ -137,7 +137,7 @@ def main(argv=None) -> int:
 
     def grade_one(job):
         tid, _idx, code = job
-        return grade_rtl(code, tasks[tid]).reward, visible_ok(code, tasks[tid].top)
+        return grade(code, tasks[tid]).reward, visible_ok(code, tasks[tid].top)
 
     graded = pmap(grade_one, jobs, backend="local", retries=1, is_infra=lambda v: v[0] is None)
     for (tid, _idx, _code), (reward, visible) in zip(jobs, graded, strict=True):

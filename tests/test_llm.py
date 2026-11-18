@@ -238,6 +238,8 @@ def test_eval_run_survives_a_failing_job(monkeypatch, tmp_path):
     assert all(
         r["reward"] is None and r["stage"] == "infra" and "ConnectionError" in r["error"] for r in failed
     )
-    assert summary["job_errors"] == 2 and summary["metrics"]["infra_excluded"] == 2
+    assert summary["job_errors"] == 2 and summary["metrics"]["infra_excluded"] == 2, [
+        (r["task_id"], r["stage"], r.get("error")) for r in rows if r["reward"] is None
+    ]
     assert summary["metrics"]["pass@1"]["mean"] == pytest.approx(1.0)
     assert summary["metrics"]["pass@1"]["mean_infra_as_fail"] == pytest.approx((len(tasks) - 1) / len(tasks))
