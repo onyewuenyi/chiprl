@@ -1,0 +1,9 @@
+.venv
+.git
+data
+runs
+wandb
+**/__pycache__
+.pytest_cache
+.ruff_cache
+third_party/sky130/*.chiprl.*

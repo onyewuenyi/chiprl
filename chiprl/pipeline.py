@@ -21,6 +21,7 @@ from .tools._run import tool_versions
 from .tools.power import power
 from .tools.sim import simulate
 from .tools.synth import synth
+from .tools.timing import DEFAULT_CORNERS, multi_corner
 
 
 def _synth_blamed_on_submission(task: Task) -> bool:
@@ -38,6 +39,7 @@ def run_task(
     power_backend: str = "auto",
     period_ns: float = 10.0,
     use_cache: bool = True,
+    corners: tuple[str, ...] | None = None,
 ) -> dict:
     """Grade, then measure PPA only for a design that passed every gate before it.
 
@@ -46,7 +48,9 @@ def run_task(
     such a result is never cached and its numbers must not be used.
     """
     t0 = time.time()
-    ck = cache.key("pipeline/v4", task.content_hash(), sub_rtl, power_backend, str(period_ns))
+    ck = cache.key(
+        "pipeline/v4", task.content_hash(), sub_rtl, power_backend, str(period_ns), ",".join(corners or ())
+    )
     if use_cache and (hit := cache.get(ck)):
         return {**hit, "cache_hit": True}
     gates: dict[str, bool] = {}
@@ -116,6 +120,13 @@ def run_task(
         out["power"] = p.to_dict()
         gates["power"] = p.ok
         out["infra_error"] = p.infra_error
+    tm = None
+    if corners and gates["glsim"]:
+        # Multi-corner static timing on the same netlist (tools/timing.py). A measurement here; the
+        # optimization reward's timing gate uses it (docs/REWARD.md §3).
+        tm = multi_corner(Path(s.metrics["netlist"]), task.top, task.clock, period_ns, workdir, corners)
+        out["timing"] = tm.to_dict()
+        out["infra_error"] = out["infra_error"] or tm.infra_error
     out["ppa"] = {
         "area_um2": s.metrics["area_um2"],
         "cells": s.metrics["cells"],
@@ -124,6 +135,10 @@ def run_task(
         "power_w": p.metrics.get("total_w") if p and p.ok else None,
         "power_backend": p.metrics.get("backend") if p and p.ok else None,
         "post_synth_sim_pass": gates["glsim"],
+        "wns_ns": tm.metrics.get("wns_ns") if tm and tm.ok else None,
+        "worst_corner": tm.metrics.get("worst_setup_corner") if tm and tm.ok else None,
+        "min_period_ns": tm.metrics.get("min_period_ns") if tm and tm.ok else None,
+        "timing_met": tm.metrics.get("met") if tm and tm.ok else None,
         "clock_period_ns": period_ns,
         "valid": all(gates.values()) and "power" in gates,
     }
@@ -140,11 +155,18 @@ def main(argv=None) -> int:
     ap.add_argument("--keep", action="store_true", help="keep the work dir")
     ap.add_argument("--no-cache", action="store_true")
     ap.add_argument("--pnr", action="store_true", help="also run the LibreLane slow path (minutes)")
+    ap.add_argument(
+        "--corners",
+        nargs="*",
+        choices=DEFAULT_CORNERS,
+        help="multi-corner STA (needs OpenSTA); bare flag = ss tt ff",
+    )
     a = ap.parse_args(argv)
     task = load_verilogeval_dir(a.task_dir)
     rtl = a.rtl.read_text() if a.rtl else task.ref_rtl.replace("RefModule", task.top)
     wd = Path(tempfile.mkdtemp(prefix=f"chiprl_{task.task_id}_"))
-    res = run_task(task, rtl, wd, a.power_backend, a.period_ns, use_cache=not a.no_cache)
+    corners = None if a.corners is None else tuple(a.corners or DEFAULT_CORNERS)
+    res = run_task(task, rtl, wd, a.power_backend, a.period_ns, use_cache=not a.no_cache, corners=corners)
     if a.pnr and (res.get("ppa") or {}).get("area_um2") is not None:
         from .tools.pnr import pnr
 
