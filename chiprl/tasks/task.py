@@ -81,11 +81,15 @@ def load_verilogeval_dir(d: Path) -> Task:
     )
 
 
-# Upstream tasks whose own reference cannot pass their own testbench. Excluded from every count;
-# reaching the grader with them would be scored as a model failure. Found by grading all 156
-# references (2026-11-18): 155 pass, this one fails to compile.
+# Upstream tasks that cannot score a submission meaningfully. Excluded from every count.
+#   Prob099: found by grading all 156 references (2026-11-18); the reference fails to compile.
+#   Prob053: found by differential simulation (2026-11-18). The input is x until the stimulus first
+#     drives it, so the reference computes out <= x ^ out at the first edge and is x from then on;
+#     VerilogEval counts an x reference as matching anything, so 99 of 100 samples accept any
+#     value. An all-zeros module passes, and so does out <= in & out. A free reward for a policy.
 QUARANTINE: dict[str, str] = {
     "Prob099_m2014_q6c": "testbench connects ports Y2 and Y4, which the reference module does not have",
+    "Prob053_m2014_q4d": "reference output is x after the first edge, so the testbench accepts any design",
 }
 
 

@@ -197,7 +197,7 @@
     "mux": 0
    },
    "group": "Prob014_andgate",
-   "split": "test_iid"
+   "split": "train"
   },
   "Prob015_vector1": {
    "content_hash": "38ac58c764ecf78b",
@@ -691,19 +691,6 @@
     "mux": 0
    },
    "group": "Prob051_gates4",
-   "split": "train"
-  },
-  "Prob053_m2014_q4d": {
-   "content_hash": "5bcc1dba06a2e35c",
-   "family": "seq_register",
-   "features": {
-    "arith": 0,
-    "cells": 2,
-    "cmp": 0,
-    "ff_bits": 1,
-    "mux": 0
-   },
-   "group": "Prob002_m2014_q4i",
    "split": "train"
   },
   "Prob054_edgedetect": {

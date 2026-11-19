@@ -59,5 +59,5 @@ def test_full_dataset_loads_and_quarantine_applies():
     from chiprl.tasks.task import QUARANTINE, load_verilogeval_dataset
 
     tasks = load_verilogeval_dataset(DATASET)
-    assert len(tasks) == 155 and not {t.task_id for t in tasks} & set(QUARANTINE)
+    assert len(tasks) == 154 and not {t.task_id for t in tasks} & set(QUARANTINE)
     assert len(load_verilogeval_dataset(DATASET, include_quarantined=True)) == 156

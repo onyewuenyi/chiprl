@@ -20,7 +20,7 @@ HAVE_DATA = splits.DATASET.exists()
 
 
 def test_manifest_covers_every_task_once():
-    assert len(ROWS) == 155
+    assert len(ROWS) == 154  # 156 upstream minus 2 quarantined (chiprl/tasks/task.py)
     assert Counter(r["split"] for r in ROWS.values()).keys() == set(splits.SPLITS)
     assert all(r["family"] in FAMILIES for r in ROWS.values())
 

@@ -130,6 +130,10 @@ def grade_rtl(
             detail["equiv"] = er.to_dict()
             if er.metrics.get("proven"):
                 r += 0.1
+            elif er.metrics.get("verdict") == "refuted":
+                # Passes the hidden testbench, differs from the reference on some input sequence: the
+                # testbench is weaker than the spec. The score keeps VerilogEval semantics; flag it.
+                detail["audit"] = "testbench_weaker_than_spec"
         return R(r, "ok", detail)
     finally:
         if tmp:

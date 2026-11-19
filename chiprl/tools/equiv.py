@@ -1,10 +1,13 @@
 """Equivalence check of a submission against the hidden reference. Fails closed.
 
-`equiv()` combines two independent methods into one verdict:
+`equiv()` combines three checks into one verdict:
 
+  * differential simulation (`tools/diffsim.py`): thousands of random cycles against the reference
+    under RTL semantics. Cheapest, runs first, refutes only.
   * bounded check (`equiv_bmc`): a miter of the two whole designs from power-up, every input free,
-    every flop starting at x. A counterexample is a real trace from primary inputs, so this is the
-    only source of `refuted`. Depth comes from the reference's flop bits (`bmc_depth`), not from a
+    every flop starting at x (ASIC semantics: RTL initializers stripped). A counterexample is a
+    real trace from primary inputs. Vacuous when the reference's outputs depend on an initializer
+    (they stay x, so every comparison passes); differential simulation covers that case. Depth comes from the reference's flop bits (`bmc_depth`), not from a
     clock, so the verdict is the same on a loaded machine and can be cached.
   * inductive prover: Yosys `equiv_*` by default (equiv_make / equiv_simple -seq / equiv_induct).
     eqy (SBY k-induction) is opt-in with prover="eqy".
@@ -12,7 +15,7 @@
 Verdict:
   proven   the prover proved it AND the bounded check found no counterexample AND the bounded
            problem was satisfiable (not vacuous)
-  refuted  the bounded check found a counterexample
+  refuted  differential simulation or the bounded check found a counterexample
   unknown  anything else: unproven, timeout, tool error, a prover that fails its self-test
 
 Why Yosys `equiv_*` and not eqy by default (measured 2026-11-18, 155 VerilogEval references that
@@ -39,6 +42,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from ._run import ToolResult, run, which, yosys_read_sv
+from .diffsim import diffsim
 
 BMC_DEPTH = 12  # for small designs; see bmc_depth()
 _SAT_TIMEOUT_S = 20  # per solve; hitting it marks the result as a timeout (not cached)
@@ -340,7 +344,19 @@ tee -o bmc_prove.txt sat {constraints} -prove-asserts -show-inputs -show-outputs
 
 
 def equiv(sub_path: Path, ref_rtl: str, top: str, workdir: Path, prover: str = "yosys") -> ToolResult:
-    """Combined verdict (see module docstring). metrics: proven, verdict, backend, bmc, prover."""
+    """Combined verdict (see module docstring). metrics: proven, verdict, backend, diff, bmc, prover."""
+    # Cheapest refuter first: random-stimulus differential simulation under RTL semantics. It also
+    # covers a hole in the bounded check: a reference whose outputs depend on an RTL initializer is
+    # all-x once initializers are stripped, so every bounded comparison passes vacuously.
+    diff = diffsim(sub_path, ref_rtl, top, workdir)
+    if diff.metrics.get("verdict") == "refuted":
+        return ToolResult(
+            "equiv",
+            ok=True,
+            elapsed_s=diff.elapsed_s,
+            metrics={"proven": False, "verdict": "refuted", "backend": "diffsim", "diff": diff.metrics},
+            log_path=diff.log_path,
+        )
     bmc = equiv_bmc(sub_path, ref_rtl, top, workdir)
     if bmc.infra_error:
         return ToolResult(
@@ -351,7 +367,13 @@ def equiv(sub_path: Path, ref_rtl: str, top: str, workdir: Path, prover: str = "
             "equiv",
             ok=True,
             elapsed_s=bmc.elapsed_s,
-            metrics={"proven": False, "verdict": "refuted", "backend": "yosys_bmc", "bmc": bmc.metrics},
+            metrics={
+                "proven": False,
+                "verdict": "refuted",
+                "backend": "yosys_bmc",
+                "diff": diff.metrics,
+                "bmc": bmc.metrics,
+            },
             log_path=bmc.log_path,
         )
     use_eqy = prover == "eqy" and eqy_available() and eqy_sound()
@@ -362,11 +384,12 @@ def equiv(sub_path: Path, ref_rtl: str, top: str, workdir: Path, prover: str = "
         ok=pr.ok and bmc.ok,
         infra_error=pr.infra_error,
         timeout=pr.timeout or bmc.timeout,
-        elapsed_s=bmc.elapsed_s + pr.elapsed_s,
+        elapsed_s=diff.elapsed_s + bmc.elapsed_s + pr.elapsed_s,
         metrics={
             "proven": proven,
             "verdict": "proven" if proven else "unknown",
             "backend": pr.metrics.get("backend"),
+            "diff": diff.metrics,
             "bmc": bmc.metrics,
             "prover": pr.metrics,
         },
