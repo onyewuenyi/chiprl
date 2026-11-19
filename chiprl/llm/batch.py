@@ -4,10 +4,12 @@ beat at matched sample count.
     uv run --extra llm python -m chiprl.llm.batch submit --tasks tests/fixtures/verilogeval --n 16
     uv run --extra llm python -m chiprl.llm.batch collect runs/batch-<id>.json --max-usd 10
 
-Two selection rules are reported, because they answer different questions:
+Three selection rules are reported, because they answer different questions:
   * oracle  (pass@N): any sample passes the hidden grader. An upper bound, not deployable.
   * visible (BoN@N): pick the first sample that passes lint + synthesizes, using no hidden tests.
     This is what a deployed best-of-N could actually do.
+  * cluster (BoN@N): among visible-passing samples, one from the largest behavior cluster
+    (AlphaCode-style; graders/cluster.py). Also deployable: no hidden tests or reference.
 """
 
 from __future__ import annotations
@@ -19,6 +21,7 @@ import tempfile
 import time
 from pathlib import Path
 
+from ..graders.cluster import cluster
 from ..graders.service import grade
 from ..runtime.executor import pmap
 from ..tools.lint import lint
@@ -140,17 +143,36 @@ def main(argv=None) -> int:
         return grade(code, tasks[tid]).reward, visible_ok(code, tasks[tid].top)
 
     graded = pmap(grade_one, jobs, backend="local", retries=1, is_infra=lambda v: v[0] is None)
-    for (tid, _idx, _code), (reward, visible) in zip(jobs, graded, strict=True):
+    passing: dict[str, list[tuple[str, float | None]]] = {k: [] for k in tasks}
+    for (tid, _idx, code), (reward, visible) in zip(jobs, graded, strict=True):
         oracle[tid].append(reward)
+        if visible:
+            passing[tid].append((code, reward))
         if tid not in visible_pick and visible:  # jobs are in sample order per task
             visible_pick[tid] = reward
+    # AlphaCode-style selection: among visible-passing samples, submit one from the largest
+    # behavior cluster (graders/cluster.py). Uses no hidden information, like visible_bon.
+    cluster_pick: dict[str, float | None] = {}
+    n_behaviors: list[int] = []
+    for tid, cands in passing.items():
+        if not cands:
+            continue
+        groups = cluster([c for c, _ in cands], tasks[tid].top)
+        cluster_pick[tid] = cands[groups[0][0]][1]
+        n_behaviors.append(len(groups))
     n = m["n"]
     bon = [1.0 if (visible_pick.get(t) or 0) >= 1.0 else 0.0 for t in tasks]
+    cbon = [1.0 if (cluster_pick.get(t) or 0) >= 1.0 else 0.0 for t in tasks]
     out = {
         "batch_id": m["batch_id"],
         "n": n,
         "oracle": summarize(oracle, sorted({1, min(4, n), n})),
         "visible_bon": {"mean": sum(bon) / len(bon) if bon else None},
+        "cluster_bon": {"mean": sum(cbon) / len(cbon) if cbon else None},
+        "behaviors_per_task": {
+            "mean": sum(n_behaviors) / len(n_behaviors) if n_behaviors else None,
+            "single_behavior_tasks": sum(b == 1 for b in n_behaviors),
+        },
         "cost": budget.summary(),
     }
     print(json.dumps(out, indent=2))
