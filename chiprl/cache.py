@@ -76,8 +76,11 @@ _initialized: set[Path] = set()
 log = logging.getLogger(__name__)
 
 
+BUSY_TIMEOUT_S = 30.0  # how long a write waits for another writer before giving up
+
+
 def _connect(path: Path) -> sqlite3.Connection:
-    return sqlite3.connect(path, timeout=30.0, isolation_level=None, check_same_thread=True)
+    return sqlite3.connect(path, timeout=BUSY_TIMEOUT_S, isolation_level=None, check_same_thread=True)
 
 
 def _init_db(path: Path) -> None:

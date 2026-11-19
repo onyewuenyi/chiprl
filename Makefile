@@ -1,4 +1,4 @@
-.PHONY: setup test lint fmt typecheck smoke check clean auth eval-smoke agent-smoke bench bench-ray db
+.PHONY: setup test lint fmt typecheck smoke check clean auth eval-smoke agent-smoke bench bench-full bench-ray db
 setup:      ; ./scripts/setup_mac.sh
 test:       ; uv run --extra llm pytest -n auto
 lint:       ; uv run ruff check . && uv run ruff format --check .
@@ -11,5 +11,6 @@ auth:       ; uv run --extra llm python -c "from chiprl.llm.auth import credenti
 eval-smoke: ; uv run --extra llm python -m chiprl.llm.evals --tasks tests/fixtures/verilogeval --mode zero_shot --n 1 --max-usd 1
 agent-smoke:; uv run --extra llm python -m chiprl.llm.evals --tasks tests/fixtures/verilogeval --mode agent --n 1 --max-usd 3
 bench:      ; uv run python -m chiprl.runtime.bench --reps 4
+bench-full: ; uv run python -I scripts/fetch_verilogeval.py && uv run python -m chiprl.runtime.bench --tasks data/verilogeval_v2/dataset_spec-to-rtl --mutants 3 --workers 1 4 8 10 --out runs/bench.json
 bench-ray:  ; uv run --extra scale python -m chiprl.runtime.bench --backend ray --reps 4
 db:         ; uv run --extra scale python -m chiprl.analysis.db --export runs/traj.parquet

@@ -3,9 +3,16 @@
 RL environments and graders for LLM-driven chip design: RTL generation, verification, and
 **power-aware** PPA optimization (switching activity from the hidden testbench, not just area and delay).
 
-Status: Phase 1 pipeline working. One command takes a VerilogEval v2 task through
-lint, simulation, equivalence, Yosys/ABC synthesis to Sky130 HD, gate-level simulation and
-switching-activity power, and emits structured JSON.
+One command takes a VerilogEval v2 task through lint, simulation, equivalence, Yosys/ABC synthesis
+to Sky130 HD, gate-level simulation and switching-activity power, and emits structured JSON.
+
+| Area | State |
+|---|---|
+| Grader (lint, sim, equivalence, synth, gate-level sim, power) | Works. 155 of 156 VerilogEval references pass, 0 refuted; the one failure is an upstream data bug, quarantined. Zero-false-accept rule tested on mutants and 6 logged reward hacks |
+| Grading service (cache, executor, runner) | Works. Cached single entry point, streaming executor with backpressure and infra-only retry, process-group kill on timeout, fault-injection tests. Design and numbers in [docs/DESIGN.md](docs/DESIGN.md) |
+| Eval harness (Claude zero-shot, agent, best-of-N, auditor) | Works with a fake client in tests. Resumable runs with a provenance manifest. No paid run yet |
+| Power reward, PPA env, task splits, paired statistics | Planned. `chiprl/rewards`, `envs` (beyond `RTLGenEnv`), `baselines`, `analysis` (beyond `db.py`) are stubs |
+| Open-model training (SFT, GRPO) | Planned. `chiprl/train` is a stub; `infra/sky/verl_grpo.yaml` has not been run |
 
 Runs locally on an Apple Silicon Mac. GPU phases use a rented service (see [docs/STACK.md](docs/STACK.md)).
 
@@ -15,6 +22,7 @@ brew install uv                # plus Docker Desktop if you want OpenSTA
 source .envrc
 make check                     # ruff + ty + grader golden tests
 make smoke                     # one VerilogEval task end to end -> JSON
+make bench-full                # fetch 156 VerilogEval tasks (pinned) + throughput sweep -> runs/bench.json
 uv run python -m chiprl.pipeline tests/fixtures/verilogeval/Prob068_countbcd --pnr   # + post-route
 uv run python -m chiprl.pipeline <task_dir> --rtl my_submission.sv
 ```
@@ -38,9 +46,10 @@ repo or GitHub. Every run takes a hard `--max-usd` cap. Details in [docs/SECURIT
 submission.sv
   -> lint     policy (no $systasks, no final, no RefModule shadowing) + verilator --lint-only
   -> sim      iverilog vs hidden tb; nonce-tagged result line; sample count must match reference
-  -> equiv    eqy (sat strategy), fallback yosys equiv_*               (+0.1 bonus if proven)
+  -> equiv    bounded check from power-up + yosys equiv_*, both required (+0.1 bonus if proven)
   -> synth    yosys-slang frontend, synth + dfflibmap + abc, sky130_fd_sc_hd tt (dont_use filtered)
   -> glsim    iverilog on the netlist + sky130 cell models, same hidden stimulus, 100 MHz, VCD
+              (must pass with the reference sample count, or no power number is reported)
   -> power    OpenSTA read_vcd + report_power   (if `sta` on PATH)
               python proxy: sum 0.5*C_fanout*V^2*toggles/T + leakage   (always)
   -> [--pnr] LibreLane RTL-to-GDS, post-route gate sim, OpenSTA with SPEF + VCD (slow path)
@@ -50,21 +59,23 @@ submission.sv
 Infra failures (missing tool, simulator killed, reference run failed) return `reward=None` and are
 excluded from training and eval, never scored as 0.
 
-## First results (reference RTL as submission, cloud CPU, proxy power backend)
+## Fixture results (reference RTL as submission, M5 Mac, OSS CAD Suite 2026-11-12, proxy power)
 
-| Task | Reward | Equiv | Area (um2) | Flops | Depth | P_sw+leak @100 MHz | Gate-sim | Wall (s) |
+| Task | Reward | Equivalence | Area (um2) | Flops | Depth | P_sw+leak @100 MHz | Gate-sim | Wall (s) |
 |---|---|---|---|---|---|---|---|---|
-| Prob009_popcount3 | 1.1 | proven | 33.8 | 0 | 3 | 3.06 uW | pass | 1.1 |
-| Prob035_count1to10 | 1.1 | proven | 143.9 | 4 | 3 | 7.16 uW | pass | 1.1 |
-| Prob068_countbcd | 1.1 | proven | 628.1 | 16 | 6 | 14.69 uW | pass | 2.3 |
-| Prob075_counter_2bc | 1.1 | proven | 96.3 | 2 | 4 | 4.49 uW | pass | 1.1 |
+| Prob009_popcount3 | 1.1 | proven | 33.8 | 0 | 3 | 3.00 uW | pass | 0.8 |
+| Prob035_count1to10 | 1.1 | proven | 148.9 | 4 | 3 | 8.09 uW | pass | 0.8 |
+| Prob068_countbcd | 1.1 | proven | 611.8 | 16 | 8 | 14.65 uW | pass | 1.5 |
+| Prob075_counter_2bc | 1.1 | proven | 102.6 | 2 | 3 | 4.73 uW | pass | 0.9 |
 
-Proxy power excludes internal (short-circuit + flop clock-pin) power and wire cap, so it
-undercounts versus OpenSTA. Quantifying that gap is the Phase 5 proxy study.
+Wall times were measured while a benchmark ran on the same machine. Proxy power excludes internal
+(short-circuit + flop clock-pin) power and wire cap, so it reads 3.6 to 10.7x below OpenSTA on these
+fixtures (docs/STACK.md). Quantifying that gap is the proxy study.
 
-Grader golden tests: reference scores 1.1, 35/36 mutants killed across 4 tasks (the survivor,
-`i<4 -> i<=4` in the BCD loop, is an equivalent mutant), empty module 0, constant outputs 0,
-three reward hacks blocked. See [docs/hack_log.md](docs/hack_log.md).
+Grader golden tests: reference scores 1.1, mutants killed (equivalent mutants listed), empty module
+0, constant outputs 0, and every reward hack in [docs/hack_log.md](docs/hack_log.md) blocked by a
+regression test. Grader and infrastructure failures found along the way are in
+[docs/failure_log.md](docs/failure_log.md).
 
 ## Layout
 
@@ -72,14 +83,14 @@ three reward hacks blocked. See [docs/hack_log.md](docs/hack_log.md).
 chiprl/
   tasks/      Task dataclass, VerilogEval loader (splits, decontam manifests next)
   tools/      lint, sim, equiv, synth, power -> ToolResult JSON
-  graders/    rtl_gen.py (gated grader), mutate.py (mutants for golden tests + DV env)
+  graders/    rtl_gen.py (gated grader), service.py (cached entry point), mutate.py (mutants)
   envs/       ChipEnv (Phase 2)
   rewards/    gated_ppa, proxies (Phase 2/5)
   baselines/  zero_shot, scaffold, best_of_n, optuna_flow (Phase 3)
   train/      rejection-sampling SFT, GRPO (Phase 4)
   analysis/   bootstrap CIs, failure taxonomy, proxy correlation (Phase 5)
   pipeline.py one task end to end
-  cache.py    sqlite cache keyed on sha256(rtl, task, flags, tool versions)
+  cache.py    sqlite cache keyed on task, submission, options, tool versions, grader source
 configs/      env / reward / eval yaml
 tests/        golden tests; fixtures are 4 VerilogEval v2 tasks (MIT, NVlabs)
 third_party/  Sky130 HD liberty + cell models (Apache-2.0, via OpenSTA examples)
