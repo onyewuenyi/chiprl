@@ -107,5 +107,6 @@ docker/       arm64-native OpenSTA image
 scripts/      setup_mac.sh, bin/sta (Docker wrapper)
 ```
 
+Candidate features with model and cost estimates are in [docs/FEATURES.md](docs/FEATURES.md).
 See [docs/PLAN.md](docs/PLAN.md) for the roadmap and [docs/EXPERIMENTS.md](docs/EXPERIMENTS.md)
 for the experiment ladder (E0 to E13) that drives it.
