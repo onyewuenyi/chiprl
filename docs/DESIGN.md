@@ -95,25 +95,42 @@ Equivalence method cost over the 155 references:
 | eqy (SBY strategy) | 139, all also proven by Yosys | 1.1 s | 88 s | 503 s |
 | Bounded check, depth 4 | 154 clean | 0.06 s | 43 s | 131 s |
 
-The full sweep (`make bench-full`: 155 tasks x (reference + 3 mutants), 1/4/8/10 workers, cold and
-warm cache, per-stage time) is pending; its table goes here.
+Full sweep (`make bench-full`): 155 tasks, reference + up to 3 mutants each = 516 distinct
+submissions, equivalence bonus on. Outcomes: 171 pass, 340 sim mismatch, 3 compile, 1 lint,
+1 timeout, 0 infra. Other work (test runs) shared the machine during parts of the sweep.
+
+| Workers | Cold wall | Cold rollouts/s | p50 | p95 | p99 | max | Warm rollouts/s |
+|---|---|---|---|---|---|---|---|
+| 1 | 255.4 s | 2.0 | 0.10 s | 0.51 s | 2.8 s | 120.2 s | 31,700 |
+| 4 | 150.3 s | 3.4 | 0.11 s | 0.49 s | 3.1 s | 120.2 s | 24,300 |
+| 8 | 138.0 s | 3.7 | 0.15 s | 0.66 s | 4.1 s | 120.3 s | 11,100 |
+| 10 | 139.8 s | 3.7 | 0.22 s | 0.92 s | 5.6 s | 120.3 s | 16,000 |
+
+Time by stage at 1 worker (sum over jobs that ran tools): lint 22 s, simulation 159 s, equivalence
+58 s. Per-call p50 is about 0.05 s for each stage.
+
+**Reading it.** Throughput stops scaling at 4 workers, and the cause is one job: a mutant that hangs
+the simulator runs into the 120 s wall-clock timeout, then the reference control run. That single
+job is about 120 s of the 138 to 150 s wall, and about 120 of the 159 s of simulation time. Every
+other simulation takes 0.05 to 0.1 s, so the timeout is over 1000x the p95. Without it, 10 workers
+would finish in roughly 15 s.
 
 ## What breaks first at 100x
 
-From the numbers above, ahead of the full sweep:
-
-1. **Equivalence on wide designs.** It is the long tail: a few designs account for most grading
-   time (one conwaylife-sized design costs as much as dozens of small ones). At 100x the p95 is set
-   by these. Levers: the size-based depth already applied, skipping the bonus check for rollouts
-   that do not pass simulation (already the case), and moving the bonus off the hot path entirely
-   for RL, where only the ranking within a group matters.
-2. **One machine's cores.** Grading is CPU-bound subprocess work, so throughput scales with cores
-   until then; the warm-cache rate shows the Python layer is not the limit. Past one machine, the
-   same `imap` contract runs on Ray (`CHIPRL_BACKEND=ray`), and the cache needs to move from SQLite
-   to a shared store.
-3. **The shared cache file.** WAL SQLite serializes writers. At thousands of writes per second
-   from many processes, writes queue behind the busy timeout; reads keep working. The fix is a
-   network key-value store with the same key; the key design does not change.
+1. **The fixed simulation timeout, already at 1x.** One hanging submission holds a worker for
+   120 s while normal jobs take 0.1 s, so wall time is set by the slowest job, not by the work. At
+   100x with a policy that learns to hang the simulator, this dominates everything. The fix is a
+   per-task timeout derived from the reference's own run time (for example, max(5 s, 20x the
+   reference's simulation time), measured once per task like the sample count), so a hang costs
+   seconds. It changes how `timeout` is classified, so it needs its own golden test before it lands.
+2. **Equivalence on wide designs.** The long tail of real work: a few large designs (conwaylife,
+   gshare, popcount255) cost as much as dozens of small ones. Size-based depth already cut the
+   full-set sweep from 193 s to 23 s. For RL, the bonus can move off the hot path entirely, since
+   GRPO uses only the ranking within a group.
+3. **One machine's cores, then the shared cache.** Grading is CPU-bound subprocess work; the warm
+   rate (11,000 to 31,000 lookups/s) shows the Python layer is not the limit. Past one machine the
+   same `imap` contract runs on Ray (`CHIPRL_BACKEND=ray`), and the cache moves from WAL SQLite,
+   which serializes writers, to a shared key-value store with the same key.
 
 ## Not done
 

@@ -65,6 +65,7 @@ it also sandboxes model-written RTL.
 | Fast path per task, proxy power | native | 1.0–1.9 s |
 | Fast path per task, OpenSTA power | native + Docker `sta` | 1.3–2.3 s (image is arm64, 7.5 GB) |
 | Throughput (`make bench`, 128 jobs) | native | 36.7 graded rollouts/s, p50 0.20 s, p95 0.60 s, 0 infra errors (cloud box: 21.6/s) |
+| Full sweep (`make bench-full`, 155 tasks, 516 submissions, Nov 18) | native | 3.7 graded rollouts/s cold at 8 to 10 workers, p50 0.15 s, p95 0.66 s; wall bound by one 120 s simulator timeout (see DESIGN.md); warm cache 11k to 32k/s |
 | Verilator `--timing` vs Icarus | native | 2.37 s vs 0.17 s sim on countbcd; Icarus stays default |
 | LibreLane RTL-to-GDS (countbcd) | Docker | 63 s, WNS +3.13 ns, 2814 instances incl. fill/tap. Needs a pty (see below) |
 | Small-model generation (MLX, Qwen2.5-Coder-1.5B 4-bit) | native | 116 tok/s single stream, 1.0 GB |
