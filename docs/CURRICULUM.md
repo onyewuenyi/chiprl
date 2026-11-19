@@ -43,20 +43,35 @@ as the Atlas asks. Nothing here pre-writes those.
 | 3 Inside the transformer | E10 (just in time) | — (training code is not built) | P3 attention + KV cache, outside chiprl (an ML-coding rep) | KV-cache decode equals full forward |
 | 4 The policy update | E8 | — | P4 bandit, REINFORCE, baseline, PPO clip → `chiprl/rl/bandit.py`; the derivation in `docs/notebook/E8.md` | Offset test: +5 to every reward changes nothing with a baseline |
 | 5 Many-step RL | E5–E7, E13 | `envs/rtl_env.py` (tool surface; no reset/step yet), `tasks/splits.py` | E5 `PowerOptEnv` (reset/step, oracle); P5 GridPlace as E13 prep | Oracle replays to the same reward; determinism test |
-| 6 Rewards you can trust | E0–E4, E11 | `graders/rtl_gen.py` gates, `tools/equiv.py`, `tests/test_golden.py`, `docs/hack_log.md`, `analysis/report.py`, `docs/REWARD.md` | P6 `power_reward` → `chiprl/rewards/power.py` + hack tests; E2 noise band | `docs/REWARD.md` §3 obligations, each a passing test |
+| 6 Rewards you can trust | E0–E4, E11 | `graders/rtl_gen.py` gates, `tools/diffsim.py`, `tools/equiv.py`, `tools/timing.py` (ss/tt/ff), `tests/test_golden.py`, `docs/hack_log.md`, `analysis/report.py`, `docs/REWARD.md` | P6 `power_reward` → `chiprl/rewards/power.py` + hack tests; E2 noise band | `docs/REWARD.md` §3 obligations, each a passing test |
 | 7 Infra at scale | E0, E5, E9, E10 | `runtime/executor.py`, `cache.py`, `tools/_run.py`, `runtime/manifest.py`, `runtime/bench.py`, `docs/DESIGN.md` | P7 asyncio rollout service, standalone; then diff it against chiprl's runtime | Same tests as P7, then read `tests/test_executor.py` and `tests/test_cache.py` |
-| 8 Agents and data | E9–E10 | `llm/agent.py` (tool loop, budget), `llm/batch.py` (best-of-N), `llm/auditor.py`, `evals --split`, `analysis/report.py` | P8 harness: context policy (last 3 verbatim, older summarized), ablation table, deep dive | Held-out pass@1 with a Wilson interval, failures by layer |
+| 8 Agents and data | E9–E10 | `llm/agent.py` (tool loop, budget), `llm/batch.py` (best-of-N incl. cluster selection), `graders/cluster.py`, `tasks/export.py` (tasks as container + verifier), `tasks/coverage.py`, `llm/auditor.py`, `evals --split`, `analysis/report.py` | P8 harness: context policy (last 3 verbatim, older summarized), ablation table, deep dive | Held-out pass@1 with a Wilson interval, failures by layer |
 
 ## What the Atlas projects need from chiprl, and where it is
 
 | Project needs | chiprl provides |
 |---|---|
 | P6(b) repeatability: grade the same candidates 5 times | `CHIPRL_NO_CACHE=1` (or each call is a cache hit and σ is 0 by construction) |
-| P6(c) ≥ 50 held-out designs, failures by cause | `evals --split test_iid` / `test_ood` (33 + 36 tasks); `python -m chiprl.analysis.report runs/<run>` |
+| P6(c) ≥ 50 held-out designs, failures by cause | `evals --split test_iid` / `test_ood` (32 + 36 tasks); `python -m chiprl.analysis.report runs/<run>` |
 | P6(d) new vs old on the same designs, paired interval | `python -m chiprl.analysis.report runs/<old> runs/<new>` (paired bootstrap, McNemar, tasks regressed) |
 | P8 ≥ 30 held-out tasks, Wilson interval, cost per success | `--split test_ood` (36 FSMs) or `test_iid`; `summary.json` cost; `report` |
 | P8 budget enforced in code | `llm/costs.Budget`, required `--max-usd`, unknown models refused |
 | Any claim: n chosen before the run (R2) | `analysis.stats.tasks_needed(delta, discordant)` |
+
+## From the CS329A and Ricursive reviews (Nov 18)
+
+| Idea | Where it landed |
+|---|---|
+| Sample, filter, cluster survivors by behavior (AlphaCode) | `graders/cluster.py`; `cluster_bon` in `llm/batch.py`. Selection and diversity only, never proof sharing |
+| Differential testing against simulators | `tools/diffsim.py`, the first refuter in `equiv()` |
+| Search the harness as a config (Archon, ADAS) | Headline row E9d in EXPERIMENTS.md |
+| Stack GRPO with best-of-N; report curves over k | Headline row E10b and the R6 note |
+| Small trusted checker, fail closed (AlphaProof, Lean) | `docs/DESIGN.md`, "A small trusted core" |
+| Tasks packaged like agentic coding benchmarks | `tasks/export.py`, `chiprl/verify.py` |
+| Synthetic tasks with coverage metrics | `tasks/coverage.py` (the E5 generator reports the same) |
+| Multi-corner timing | `tools/timing.py`, `pipeline --corners` |
+| Content-addressed action cache (Bazel) | `docs/DESIGN.md`, cache decision |
+| Not taken: UPF, EM/IR, DFT gates; Ripple's RL recipe | No open flow, or not verified; revisit for E10 |
 
 ## Status, Nov 18 2026
 

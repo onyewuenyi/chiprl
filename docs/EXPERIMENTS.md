@@ -90,7 +90,8 @@ These apply to every rung. Each one exists because a specific way of fooling mys
   it has been public since 2023. Include at least one design that is not a toy (Ibex or PicoRV32
   ALU/decoder, or an OpenTitan IP block, thousands of cells) before claiming anything about "real
   designs".
-- **R6. Baselines are curves at matched cost.** Every method is a curve of best correct ΔP vs EDA
+- **R6. Baselines are curves at matched cost.** Include a searched harness config (E9d) and a
+  stacked GRPO + best-of-N row (E10b). Every method is a curve of best correct ΔP vs EDA
   calls (and tokens or GPU-hours), on the same axes. An RL claim counts only if its curve is above
   best-of-N and search at equal cost. Use AutoTuner or BO wherever the actions are tool knobs.
 - **R7. Validate every judge.** The hack auditor is an LLM classifier. Hand-label about 50
@@ -378,7 +379,17 @@ LLM reasoning, and at what cost in EDA runs?
 | LLM advisor + me | E9a | | | | | | |
 | LLM agent | E9b | | | | | | |
 | LLM best-of-N | E9c | | | | N | | |
+| Searched harness config (generator, ranker, verifier, budgets) | E9d | | | | fixed budget | | |
 | GRPO-trained model | E10 | | | | | | |
+| GRPO + best-of-N with the verifier (do the gains stack?) | E10b | | | | N | | |
+
+Report every row as a curve over k (samples or EDA calls), not one number: pass@k and best
+correct ΔP at k = 1, 4, 16, 64, so rows are compared at matched cost (R6). Two rows exist to keep
+the comparison honest: E9d searches the agent harness itself (Archon / ADAS style: generator,
+ranker, verifier and budget as a config, searched at a fixed tool budget), so "beats search" is
+not a win over a weak baseline; E10b stacks GRPO with grader-selected best-of-N, so the write-up
+can say whether training and selection add or overlap. Selection rows also report AlphaCode-style
+cluster selection (`graders/cluster.py`) next to first-visible-pass.
 
 ## What each rung buys in an interview
 

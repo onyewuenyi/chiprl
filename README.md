@@ -8,10 +8,12 @@ to Sky130 HD, gate-level simulation and switching-activity power, and emits stru
 
 | Area | State |
 |---|---|
-| Grader (lint, sim, equivalence, synth, gate-level sim, power) | Works. 155 of 156 VerilogEval references pass, 0 refuted; the one failure is an upstream data bug, quarantined. Zero-false-accept rule tested on mutants and 6 logged reward hacks |
+| Grader (lint, sim, equivalence, synth, gate-level sim, power) | Works. 155 of 156 VerilogEval references pass, 0 refuted; 2 upstream tasks quarantined (one reference does not compile, one testbench accepts any design). Zero-false-accept rule tested on mutants and 6 logged reward hacks |
 | Grading service (cache, executor, runner) | Works. Cached single entry point, streaming executor with backpressure and infra-only retry, process-group kill on timeout, fault-injection tests. Design and numbers in [docs/DESIGN.md](docs/DESIGN.md) |
 | Eval harness (Claude zero-shot, agent, best-of-N, auditor) | Works with a fake client in tests. Resumable runs with a provenance manifest. No paid run yet |
-| Task splits, statistics, eval reports | Works. 155 tasks in train / test_iid / test_ood by structural family, leakage-tested; Wilson, paired bootstrap, McNemar; `python -m chiprl.analysis.report` |
+| Differential simulation, behavior clustering, multi-corner timing | Works. Random-stimulus refuter (found a broken upstream testbench), AlphaCode-style cluster selection, OpenSTA at ss/tt/ff (`pipeline --corners`, needs Docker) |
+| Task export | Works. Each task as container + instruction + grader-only verifier + score (`python -m chiprl.tasks.export`), run end to end in Docker |
+| Task splits, statistics, eval reports | Works. 154 tasks in train / test_iid / test_ood by structural family, leakage-tested; Wilson, paired bootstrap, McNemar; `python -m chiprl.analysis.report` |
 | Power reward, PPA env, baselines | Planned: E4 to E7. `chiprl/rewards`, `envs` (beyond `RTLGenEnv`), `baselines` are stubs |
 | Open-model training (SFT, GRPO) | Planned. `chiprl/train` is a stub; `infra/sky/verl_grpo.yaml` has not been run |
 

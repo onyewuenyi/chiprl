@@ -36,10 +36,23 @@ policy rollouts ──► imap (bounded window) ──► grade() ──► cach
 
 ## Decisions
 
+**A small trusted core that fails closed.** The lesson of the eqy false proof (failure_log #1),
+and the same one AlphaProof draws from the Lean kernel: a reward is only as trustworthy as the
+smallest piece that decides it. Every "pass" in chiprl is decided by a few checks that are tested
+against designs known to be wrong, and anything they cannot decide is `unknown`, never `proven`.
+
+**Cheapest refuter first** (`chiprl/tools/diffsim.py`). Before any solver runs, the candidate is
+simulated against the reference on thousands of random cycles. A mismatch is a concrete
+counterexample in about 0.1 s; it found a broken upstream testbench (failure_log #14) and a vacuous
+case in the bounded check (#15). No mismatch proves nothing, so the formal checks still decide
+`proven`.
+
 **Single entry point with a content-addressed cache** (`chiprl/graders/service.py`, `chiprl/cache.py`).
 The key is a hash of task content, submission, options, every tool version, a fingerprint of the
 grading-path source and vendored PDK, and the runtime knobs that change results. Editing grader code
-invalidates the cache without anyone remembering to bump a tag. Infra results and anything
+invalidates the cache without anyone remembering to bump a tag. This is the same design as Bazel's action
+cache: an action is keyed by the digest of its inputs, its command and its tool versions, and an
+output is reused only if the whole key matches. Infra results and anything
 load-dependent (an equivalence check that hit a solver timeout) are never stored, so a transient
 failure is retried instead of remembered. Within a process the cache is single-flight: identical
 in-flight submissions are graded once. SQLite in WAL mode with one connection per thread; a cache

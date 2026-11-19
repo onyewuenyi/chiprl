@@ -30,10 +30,12 @@ Gates run in order; the first failure sets the stage and the score.
 
 - **Binary is the default.** `dense=True` gives partial credit for nearly-right sequential logic,
   a gradient toward plausible-but-wrong RTL (`docs/hack_log.md` #4). It stays behind a flag.
-- **The +0.1 bonus** needs a bounded check from power-up *and* Yosys `equiv_*` to agree, with RTL
-  initializers stripped (`tools/equiv.py`). It is a bonus because induction is incomplete for
+- **The +0.1 bonus** needs three things (`tools/equiv.py`): differential simulation on random
+  stimulus finds no mismatch, a bounded check from power-up (RTL initializers stripped) finds no
+  counterexample, and Yosys `equiv_*` proves it. It is a bonus because induction is incomplete for
   correct designs with a different state encoding. `refuted` on a design that passes the testbench
-  means the testbench is weaker than the spec: flag it for audit.
+  means the testbench is weaker than the spec; the grade then carries
+  `audit: testbench_weaker_than_spec`. That is how `Prob053` was found and quarantined.
 - **pass@k** counts `score >= 1.0` as a pass. Report `mean` (infra excluded) next to
   `mean_infra_as_fail` (`llm/evals.summarize`); a gap between them means infra, not the model, is
   moving the number.
@@ -62,7 +64,7 @@ r = 1[gates] · clip((P_orig − P_cand) / P_orig, −1, 1)      if |ΔP / P_ori
 r = 0                                                        if |ΔP / P_orig| <  noise_band
 r = None                                                     on infra
 gates = lint ∧ hidden sim ∧ samples ∧ equivalence(cand, orig) is `proven`
-        ∧ gate-level sim ∧ timing (WNS ≥ 0 at the task clock) ∧ area ≤ 1.1 × area_orig
+        ∧ gate-level sim ∧ timing met at ss, tt and ff ∧ area ≤ 1.1 × area_orig
 ```
 
 What the implementation must satisfy. Each is a test you write (Project 6 asks you to write them
@@ -78,7 +80,10 @@ yourself):
 5. Hack tests that must score 0: a testbench memorizer, a mode deleter, an output tie-off, and a
    length-padding attack on any length penalty.
 6. The timing and area gates must bind on the tasks (R3): set each task's clock at 90 to 95% of its
-   Fmax, or the gate tests nothing.
+   Fmax, or the gate tests nothing. `tools/timing.multi_corner` gives setup and hold slack per
+   corner and `min_period_ns` at the worst corner (`pipeline --corners`).
+7. Equivalence against the original uses `tools/diffsim.py` first: a mismatch on random stimulus
+   is a counterexample, and its held-out seeds double as the stimulus audit in obligation 4.
 
 `configs/reward/gated.yaml` sketches this formula but no code reads it. When `power_reward` lands, it
 replaces that file or is configured by it; do not keep both.
