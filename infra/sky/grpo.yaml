@@ -1,0 +1,43 @@
+# GPU path for rung E10: one SkyPilot task on whichever cloud has capacity (RunPod, Lambda, GCP, AWS, ...).
+#   sky launch -c chiprl-rl infra/sky/grpo.yaml --env MODEL=Qwen/Qwen2.5-Coder-1.5B-Instruct --secret HF_TOKEN
+#   sky rsync-down chiprl-rl ~/sky_workdir/runs ./runs   # checkpoints, manifest and runs/mlflow.db
+#   sky down chiprl-rl            # always tear down; autostop below is the backstop
+# Trainer: TRL GRPOTrainer + LoRA (chiprl/train/grpo.py), versions from uv.lock (trl 1.18). vLLM
+# rollouts are opt-in (USE_VLLM=1); TRL 1.18 supports vllm >=0.23,<0.34. For a remote MLflow server,
+# pass --secret MLFLOW_TRACKING_URI; otherwise runs/mlflow.db on the node, copied down above.
+# Not run yet. Before the first paid run: a 10-step run, then check grader throughput on this node.
+name: chiprl-grpo
+
+resources:
+  accelerators: {H100:1, A100-80GB:1, L40S:1}   # first available wins
+  disk_size: 200
+  autostop: 30m
+
+envs:
+  MODEL: Qwen/Qwen2.5-Coder-1.5B-Instruct
+  MAX_STEPS: "300"
+  USE_VLLM: "0"
+  CHIPRL_BACKEND: local
+
+workdir: .
+
+setup: |
+  set -euo pipefail
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  export PATH="$HOME/.local/bin:$PATH"
+  # Same OSS CAD Suite build as the Mac and CI (.oss-cad-suite-version), not the distro's Yosys 0.33.
+  TAG=$(cat .oss-cad-suite-version)
+  curl -fL "https://github.com/YosysHQ/oss-cad-suite-build/releases/download/$TAG/oss-cad-suite-linux-x64-${TAG//-/}.tgz" \
+    | tar -xz -C "$HOME"
+  uv sync --locked --extra train --extra scale
+  if [ "$USE_VLLM" = "1" ]; then uv pip install "vllm>=0.23,<0.34"; fi
+  uv run python -I scripts/fetch_verilogeval.py
+
+run: |
+  set -euo pipefail
+  export PATH="$HOME/oss-cad-suite/bin:$HOME/.local/bin:$PATH"
+  # Grader throughput on this node before spending GPU hours (rollouts must not wait on EDA).
+  uv run python -m chiprl.runtime.bench --tasks data/verilogeval_v2/dataset_spec-to-rtl --mutants 1 --no-equiv
+  VLLM_FLAG=""; [ "$USE_VLLM" = "1" ] && VLLM_FLAG="--use-vllm"
+  uv run --extra train --extra scale python -m chiprl.train.grpo --split train --model "$MODEL" \
+    --max-steps "$MAX_STEPS" --mlflow $VLLM_FLAG

@@ -18,8 +18,13 @@ pd = [
 ]
 scale = [
     "duckdb>=1.1",
+    "mlflow>=3.5",
     "ray>=2.40",
-    "wandb>=0.19",
+]
+train = [
+    "datasets>=4",
+    "peft>=0.17",
+    "trl>=1.18",  # 1.18: all-None rewards are unscorable (advantage 0), see chiprl/train/grpo.py
 ]
 
 [dependency-groups]
@@ -49,3 +54,8 @@ ignore = ["PLR0911", "PLR0912", "PLR0913", "PLR0915", "PLR2004", "PLW0603", "RUF
 
 [tool.ty.environment]
 python-version = "3.12"
+
+[tool.ty.rules]
+# Optional extras (llm, scale, train) are installed in some environments and not others, so an
+# import-not-found ignore is needed in CI and unused locally. Do not fail on that.
+unused-ignore-comment = "ignore"

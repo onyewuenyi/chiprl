@@ -39,9 +39,9 @@ use, and what is open and available to me.
 | Secrets | `ant auth login` (OAuth) locally, Keychain fallback, WIF in CI, gitleaks pre-commit |
 | Local small-model iteration | MLX-LM on the Mac for 0.5B to 3B sanity runs |
 | Rollout inference | vLLM (SGLang as alternative) on the GPU service |
-| RL | **verl** (multi-turn tool rollouts, GRPO/DAPO built in) or TRL `GRPOTrainer` for the first run |
+| RL | **TRL 1.18 `GRPOTrainer` + PEFT LoRA** (`chiprl/train/grpo.py`); verl only if multi-turn rollouts at scale need it |
 | GPU service | **Modal** for bursty jobs (pay per second, Python-defined images); RunPod / Lambda for multi-hour runs |
-| Tracking | Weights & Biases |
+| Tracking | MLflow (`chiprl/tracking.py`; local SQLite store in `runs/`, `make mlflow-ui`) |
 | Config | Hydra-style YAML in `configs/` (pydantic models once the env API settles) |
 
 ## Deliberately not used
@@ -107,8 +107,8 @@ stacks are hedged to what is public.
 |---|---|---|---|
 | Fan-out | thread pool -> **Ray** (`chiprl/runtime/executor.py`, `CHIPRL_BACKEND=ray`) | OpenAI has said it used Ray to train ChatGPT-era models; verl, OpenRLHF and SkyRL all run on Ray | Now as a flag. Default when grading is the RL bottleneck or goes multi-node |
 | Rollout + RL | **vLLM** + **verl** (TRL fallback) | Most open RL-for-LLM reproductions (DAPO, VerlTool, ChipSeek-style work) | Phase 4 |
-| GPU provisioning | **SkyPilot** (`infra/sky/verl_grpo.yaml`) over RunPod/Lambda; **Modal** for short bursty jobs | SkyPilot is the common open multi-cloud launcher and ships a verl example | First GPU run |
-| Tracking | **Weights & Biases** (`evals --wandb`) | Widely used at OpenAI and across RL labs | First paid eval |
+| GPU provisioning | **SkyPilot** (`infra/sky/grpo.yaml`) over RunPod/Lambda; **Modal** for short bursty jobs | SkyPilot is the common open multi-cloud launcher and ships a verl example | First GPU run |
+| Tracking | **MLflow** (`evals --mlflow`, `train.grpo --mlflow`) | Open source, self-hosted, no account; switched from W&B on Nov 18 to keep the whole stack reproducible offline | Now |
 | Run data | JSONL per run -> **DuckDB** views + Parquet export (`chiprl/analysis/db.py`) | Columnar files + SQL is the standard pattern; scales to many GB on one laptop | Now |
 | Warehouse | BigQuery or ClickHouse | Only if data outgrows one machine | Probably never for this project |
 | Cluster | KubeRay on k8s | How Ray runs in production at large orgs | Only with a persistent multi-node cluster |

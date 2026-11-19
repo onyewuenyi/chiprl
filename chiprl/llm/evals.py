@@ -69,29 +69,6 @@ def summarize(results: dict[str, list[float | None]], ks: list[int]) -> dict:
     return out
 
 
-def log_wandb(run_dir: Path, summary: dict, results: dict[str, list[float | None]]) -> None:
-    """Optional experiment tracking. Same run name as the local dir, so the two stay joinable."""
-    import wandb  # ty: ignore[import-not-found]  # optional `scale` extra
-
-    run = wandb.init(
-        project="chiprl",
-        name=run_dir.name,
-        job_type="eval",
-        config={k: summary[k] for k in ("mode", "model", "effort", "n")},
-    )
-    flat = {f"{k}/mean": v["mean"] for k, v in summary["metrics"].items() if isinstance(v, dict)}
-    run.log({**flat, "cost/usd": summary["cost"]["spent_usd"]})
-    table = wandb.Table(columns=["task_id", "sample", "reward"])
-    for tid, rewards in results.items():
-        for i, r in enumerate(rewards):
-            table.add_data(tid, i, r)
-    run.log({"per_task": table})
-    art = wandb.Artifact(f"traj-{run_dir.name}", type="trajectories")
-    art.add_file(str(run_dir / "trajectories.jsonl"))
-    run.log_artifact(art)
-    run.finish()
-
-
 def load_tasks(path: Path, limit: int | None, split: str | None = None) -> list[Task]:
     """Tasks from a dataset or fixture dir; `split` keeps only that split's tasks (chiprl/tasks/splits.py)."""
     if any(path.glob("*_prompt.txt")):
@@ -125,7 +102,9 @@ def main(argv=None) -> int:
     ap.add_argument(
         "--resume", type=Path, help="run dir to continue: finished jobs are skipped, infra rows rerun"
     )
-    ap.add_argument("--wandb", action="store_true", help="log to Weights & Biases (needs `wandb login`)")
+    ap.add_argument(
+        "--mlflow", action="store_true", help="also log the run to MLflow (needs the `scale` extra)"
+    )
     a = ap.parse_args(argv)
 
     tasks = load_tasks(a.tasks, a.limit, a.split)
@@ -218,8 +197,10 @@ def main(argv=None) -> int:
         "sessions": sessions,
     }
     (run_dir / "summary.json").write_text(json.dumps(summary, indent=2))
-    if a.wandb:
-        log_wandb(run_dir, summary, results)
+    if a.mlflow:
+        from ..tracking import log_eval_run
+
+        log_eval_run(run_dir, summary, results)
     print(json.dumps(summary, indent=2))
     return 0 if stopped is None else 3
 

@@ -15,7 +15,7 @@ to Sky130 HD, gate-level simulation and switching-activity power, and emits stru
 | Task export | Works. Each task as container + instruction + grader-only verifier + score (`python -m chiprl.tasks.export`), run end to end in Docker |
 | Task splits, statistics, eval reports | Works. 154 tasks in train / test_iid / test_ood by structural family, leakage-tested; Wilson, paired bootstrap, McNemar; `python -m chiprl.analysis.report` |
 | Power reward, PPA env, baselines | Planned: E4 to E7. `chiprl/rewards`, `envs` (beyond `RTLGenEnv`), `baselines` are stubs |
-| Open-model training (SFT, GRPO) | Planned. `chiprl/train` is a stub; `infra/sky/verl_grpo.yaml` has not been run |
+| Open-model training (GRPO) | Built, not yet run for real: TRL 1.18 `GRPOTrainer` + LoRA rewarded by the grader, infra masked (advantage 0), held-out splits refused, MLflow logging. CPU smoke test passes (`make train-smoke`); first GPU run is rung E10 (`infra/sky/grpo.yaml`) |
 
 **Research question:** can a trained model learn RTL transformations that give statistically
 defensible power improvements, keep functional correctness, and generalize to unseen designs better

@@ -85,7 +85,7 @@ ML task. The learning path below is weighted toward those.
 - [ ] Multi-turn tool API: lint, sim, synth_report, power_report, submit (JSON only)
 - [ ] Docker sandbox: `--network none`, read-only grader mounts, non-root, rlimits (rlimits + process-group kill done)
 - [x] Throughput benchmark (`make bench`, local vs Ray); CI badge pending
-- [x] Scale-up layer: Ray executor, DuckDB over runs, W&B logging, SkyPilot GPU recipe
+- [x] Scale-up layer: Ray executor, DuckDB over runs, MLflow tracking (replaced W&B), SkyPilot GPU recipe
 
 ### Phase 3: baselines (Dec 1 to Dec 7), code landed Nov 11
 - [x] Claude zero-shot + tool-using agent baselines, pass@k + CIs, cost caps, JSONL trajectories

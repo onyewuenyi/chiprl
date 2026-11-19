@@ -15,3 +15,5 @@ third_party/sky130/*.tmp
 secrets/
 .envrc
 data/
+mlruns/
+mlflow.db

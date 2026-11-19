@@ -30,10 +30,10 @@ The reward is only as good as the grader, so grader correctness beats everything
     Never run a paid eval without the user's go-ahead; tests use the fake client in tests/test_llm.py.
 11. The env (`chiprl/envs/rtl_env.py`) is the only surface a policy sees. Do not add tool outputs that
     reveal the testbench, reference, or reward.
-12. Scale-up layers (Ray, W&B, DuckDB, SkyPilot) live in the `scale` extra and are optional. The
+12. Scale-up layers (Ray, MLflow, DuckDB, SkyPilot) live in the `scale` extra and are optional. The
     local path must keep working without them. LLM API calls never go through Ray.
 
 ## Layout
 `chiprl/tools` (tool wrappers), `chiprl/graders` (gated graders, mutants), `chiprl/tasks` (loaders),
-`chiprl/envs` / `rewards` / `baselines` / `train` / `analysis` (later phases), `docs/PLAN.md` (roadmap),
+`chiprl/train` (GRPO, `train` extra), `chiprl/envs` / `rewards` / `baselines` (later phases), `analysis`, `docs/PLAN.md` (roadmap),
 `docs/STACK.md` (tool choices).
