@@ -10,6 +10,10 @@ Sources: the Nov 2026 ChatGPT conversation that set five milestones (an 8-bit ac
 equivalent RTL actions, a reward pipeline, search and bandit baselines, then PPO), and the current
 state of this repo.
 
+**Companion curriculum:** Reward Atlas teaches the concepts each rung needs; [CURRICULUM.md](CURRICULUM.md)
+maps every Atlas stage and project to a rung, the code that exists, and the file you write. What is
+scored is defined once in [REWARD.md](REWARD.md).
+
 ## Why a ladder, and what changed
 
 **Compared with the five-milestone plan.** Its core is right: start tiny, trust the measurement
@@ -228,6 +232,9 @@ PLAN), D in December, E from late December into January.
   `mutate.py` mutants, and these hacks (known-wrong). Fix the eqy false proof first: find out why
   the `sat` strategy accepts the reset-value mutant (x-tolerant miter, `-set-init-undef`,
   `async2sync`), then add a bounded check from reset, or require backend agreement.
+  *Done Nov 18 (failure_log #1): it was not the miter. The `sat` strategy's `-set-init-undef` and
+  `-set-def-formal` contradict each other on `$anyinit` flops, so the proof was vacuous. Equivalence now
+  needs a bounded check from power-up and Yosys `equiv_*` to agree; eqy is opt-in behind a self-test.*
 - **Artifact:** Rows in `docs/hack_log.md` and regression tests in `tests/test_golden.py`. A
   gate × hack matrix showing which gate is load-bearing. A per-gate false-accept / false-reject
   table on the grader-eval set.
@@ -392,3 +399,5 @@ LLM reasoning, and at what cost in EDA runs?
 | # | Date | Headline number | Notebook |
 |---|---|---|---|
 | E0 | 2026-11-13 | Reproduces natively at 36.7 rollouts/s. Area/depth differ from README (newer Yosys). Proxy is 3.6–10.7× below OpenSTA. eqy false-proves a mutant. | STACK.md "Where things run" |
+| E4 (part) | 2026-11-18 | eqy proved every sequential design vacuously; fixed. Over 155 references: 0 refuted, 147 proven, grading 193 s → 23 s. Two new hacks blocked (crash-to-exclude, RTL initializer). | failure_log #1, #11–#13; hack_log #5–#6 |
+| infra | 2026-11-18 | 155-task sweep: 3.7 rollouts/s at 8–10 workers, wall bound by one 120 s simulator timeout | DESIGN.md "Measured" |

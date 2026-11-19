@@ -11,8 +11,15 @@ to Sky130 HD, gate-level simulation and switching-activity power, and emits stru
 | Grader (lint, sim, equivalence, synth, gate-level sim, power) | Works. 155 of 156 VerilogEval references pass, 0 refuted; the one failure is an upstream data bug, quarantined. Zero-false-accept rule tested on mutants and 6 logged reward hacks |
 | Grading service (cache, executor, runner) | Works. Cached single entry point, streaming executor with backpressure and infra-only retry, process-group kill on timeout, fault-injection tests. Design and numbers in [docs/DESIGN.md](docs/DESIGN.md) |
 | Eval harness (Claude zero-shot, agent, best-of-N, auditor) | Works with a fake client in tests. Resumable runs with a provenance manifest. No paid run yet |
-| Power reward, PPA env, task splits, paired statistics | Planned. `chiprl/rewards`, `envs` (beyond `RTLGenEnv`), `baselines`, `analysis` (beyond `db.py`) are stubs |
+| Task splits, statistics, eval reports | Works. 155 tasks in train / test_iid / test_ood by structural family, leakage-tested; Wilson, paired bootstrap, McNemar; `python -m chiprl.analysis.report` |
+| Power reward, PPA env, baselines | Planned: E4 to E7. `chiprl/rewards`, `envs` (beyond `RTLGenEnv`), `baselines` are stubs |
 | Open-model training (SFT, GRPO) | Planned. `chiprl/train` is a stub; `infra/sky/verl_grpo.yaml` has not been run |
+
+**Research question:** can a trained model learn RTL transformations that give statistically
+defensible power improvements, keep functional correctness, and generalize to unseen designs better
+than search and best-of-N at matched compute? The order of work is the experiment ladder
+([docs/EXPERIMENTS.md](docs/EXPERIMENTS.md)); what is scored is [docs/REWARD.md](docs/REWARD.md); the
+curriculum that goes with it is [docs/CURRICULUM.md](docs/CURRICULUM.md).
 
 Runs locally on an Apple Silicon Mac. GPU phases use a rented service (see [docs/STACK.md](docs/STACK.md)).
 
@@ -72,7 +79,7 @@ Wall times were measured while a benchmark ran on the same machine. Proxy power 
 (short-circuit + flop clock-pin) power and wire cap, so it reads 3.6 to 10.7x below OpenSTA on these
 fixtures (docs/STACK.md). Quantifying that gap is the proxy study.
 
-Grader golden tests: reference scores 1.1, mutants killed (equivalent mutants listed), empty module
+The 1.1 is the correctness score with the equivalence bonus ([docs/REWARD.md](docs/REWARD.md) §1), a smoke test of the gates, not a result. Grader golden tests: reference scores 1.1, mutants killed (equivalent mutants listed), empty module
 0, constant outputs 0, and every reward hack in [docs/hack_log.md](docs/hack_log.md) blocked by a
 regression test. Grader and infrastructure failures found along the way are in
 [docs/failure_log.md](docs/failure_log.md).
@@ -81,14 +88,14 @@ regression test. Grader and infrastructure failures found along the way are in
 
 ```
 chiprl/
-  tasks/      Task dataclass, VerilogEval loader (splits, decontam manifests next)
+  tasks/      Task, VerilogEval loader, structural families, splits + committed manifest
   tools/      lint, sim, equiv, synth, power -> ToolResult JSON
   graders/    rtl_gen.py (gated grader), service.py (cached entry point), mutate.py (mutants)
   envs/       ChipEnv (Phase 2)
   rewards/    gated_ppa, proxies (Phase 2/5)
   baselines/  zero_shot, scaffold, best_of_n, optuna_flow (Phase 3)
   train/      rejection-sampling SFT, GRPO (Phase 4)
-  analysis/   bootstrap CIs, failure taxonomy, proxy correlation (Phase 5)
+  analysis/   stats (Wilson, paired bootstrap, McNemar), run reports, DuckDB views
   pipeline.py one task end to end
   cache.py    sqlite cache keyed on task, submission, options, tool versions, grader source
 configs/      env / reward / eval yaml

@@ -1,12 +1,27 @@
 # chiprl plan (personalized)
 
-Goal: a public repo that proves I can build the infrastructure the OpenAI AI for Chip Design team
-runs every day: trustworthy graders, sandboxed EDA tool environments, baselines, an RL run, and an
-honest analysis. Primary target is the Software Engineer role, so infra quality, throughput and
-reproducibility are first-class results, not afterthoughts. Research Engineer is the stretch.
+Goal: a public repo that is the evidence for a Research Engineer, AI for Chip Design role, with the
+Software Engineer evidence kept as a by-product. The research question:
 
-Deadline logic: it is Nov 11. Applications should not wait for RL. The repo is resume-linkable
-once Phase 2 lands (target Nov 30). RL results are interview material in December.
+> Can a trained model learn RTL transformations that give statistically defensible power
+> improvements, keep functional correctness, and generalize to unseen designs better than search
+> and best-of-N at matched compute?
+
+Reward Atlas is the curriculum for it ([docs/CURRICULUM.md](CURRICULUM.md)); the experiment ladder
+([docs/EXPERIMENTS.md](EXPERIMENTS.md)) is the order of work; [docs/REWARD.md](REWARD.md) defines
+what is scored.
+
+| Keep | Increase emphasis |
+|---|---|
+| Reliable graders and EDA infrastructure (`docs/DESIGN.md`) | Reward validity and measurement uncertainty (E2, E4, E11) |
+| Caching and throughput | Experimental design and statistics (R2, `analysis/stats.py`) |
+| Tool-using agents | Policy learning and model behavior (E8, E10) |
+| Reproducible pipelines | Ablations and held-out generalization (`tasks/splits.py`) |
+| PPA optimization | Evidence that RL beats search and best-of-N (E6, E9, E10) |
+
+History: until Nov 18 this plan targeted the Software Engineer role first, with Research Engineer as
+the stretch, so infrastructure got ahead of the science (EXPERIMENTS.md says the same). The
+infrastructure is now in good shape (`docs/DESIGN.md`); the next work is E1 to E4.
 
 ## Why this angle is mine
 
@@ -54,11 +69,13 @@ ML task. The learning path below is weighted toward those.
 ### Phase 1: eval + RTL-gen env (Nov 11 to Nov 18)
 - [x] Repo scaffold, tool wrappers to JSON, sqlite cache keyed on tool versions
 - [x] One VerilogEval task through lint, sim, equiv, synth, gate-sim, power
-- [x] Golden tests: ref 1.1, 35/36 mutants killed (1 equivalent), empty 0, constant 0, 3 hacks blocked
-- [ ] OpenSTA backend verified in Docker on my machine; record proxy vs OpenSTA on the 4 fixtures
+- [x] Golden tests: ref 1.1, 35/36 mutants killed (1 equivalent), empty 0, constant 0, every logged hack blocked
+- [x] eqy false proof root-caused and fixed; equivalence fails closed (failure_log #1, #11, #12)
+- [x] OpenSTA backend verified in Docker on my machine; proxy vs OpenSTA on the 4 fixtures (STACK.md)
 - [x] LibreLane slow path wired (`--pnr`); first real run is the nightly CI job / my Mac
 - [x] yosys-slang frontend, eqy equivalence, Verilator --timing backend (all feature-detected)
-- [ ] Load 100 VerilogEval v2 tasks; family tags; train/val split; decontam manifest (n-gram overlap vs CVDP)
+- [x] All 156 VerilogEval v2 tasks at a pinned commit (155 usable); structural family labels; train / test_iid / test_ood split by group with a leakage test
+- [ ] Decontamination manifest (n-gram overlap vs CVDP)
 - [ ] pass@1 / pass@5 table for 2 to 3 models (one small open model via vLLM or API, one frontier)
 
 ### Phase 2: DV + PPA envs (Nov 18 to Nov 30) -> resume link goes live
@@ -66,7 +83,7 @@ ML task. The learning path below is weighted toward those.
 - [ ] PPA env: gates = hidden tests + eqy; reward = clip((P_base - P_sub)/P_base) on power, area, delay
 - [ ] 20 power-family tasks (point 5 above)
 - [ ] Multi-turn tool API: lint, sim, synth_report, power_report, submit (JSON only)
-- [ ] Docker sandbox: `--network none`, read-only grader mounts, non-root, rlimits
+- [ ] Docker sandbox: `--network none`, read-only grader mounts, non-root, rlimits (rlimits + process-group kill done)
 - [x] Throughput benchmark (`make bench`, local vs Ray); CI badge pending
 - [x] Scale-up layer: Ray executor, DuckDB over runs, W&B logging, SkyPilot GPU recipe
 
