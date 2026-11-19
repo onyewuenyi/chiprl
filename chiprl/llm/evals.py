@@ -19,6 +19,7 @@ from typing import Any
 
 from ..runtime import manifest
 from ..runtime.executor import imap
+from ..tasks.splits import SPLITS, task_ids
 from ..tasks.task import Task, load_verilogeval_dataset, load_verilogeval_dir
 from .agent import AgentConfig, run_agent, run_zero_shot
 from .auth import make_client, redact
@@ -91,17 +92,25 @@ def log_wandb(run_dir: Path, summary: dict, results: dict[str, list[float | None
     run.finish()
 
 
-def load_tasks(path: Path, limit: int | None) -> list[Task]:
+def load_tasks(path: Path, limit: int | None, split: str | None = None) -> list[Task]:
+    """Tasks from a dataset or fixture dir; `split` keeps only that split's tasks (chiprl/tasks/splits.py)."""
     if any(path.glob("*_prompt.txt")):
-        return load_verilogeval_dataset(path, limit)
-    dirs = sorted(p for p in path.iterdir() if (p / "prompt.txt").exists())
-    return [load_verilogeval_dir(d) for d in dirs[:limit]]
+        tasks = load_verilogeval_dataset(path)
+    else:
+        tasks = [
+            load_verilogeval_dir(d) for d in sorted(p for p in path.iterdir() if (p / "prompt.txt").exists())
+        ]
+    if split:
+        keep = set(task_ids(split))
+        tasks = [t for t in tasks if t.task_id in keep]
+    return tasks[:limit]
 
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--tasks", type=Path, required=True)
     ap.add_argument("--limit", type=int)
+    ap.add_argument("--split", choices=SPLITS, help="only this split's tasks (chiprl/tasks/manifests)")
     ap.add_argument("--mode", choices=["zero_shot", "agent"], default="zero_shot")
     ap.add_argument("--n", type=int, default=1, help="samples per task")
     ap.add_argument("--k", type=int, nargs="+", default=[1])
@@ -119,9 +128,9 @@ def main(argv=None) -> int:
     ap.add_argument("--wandb", action="store_true", help="log to Weights & Biases (needs `wandb login`)")
     a = ap.parse_args(argv)
 
-    tasks = load_tasks(a.tasks, a.limit)
+    tasks = load_tasks(a.tasks, a.limit, a.split)
     cfg = AgentConfig(model=a.model, effort=a.effort)
-    config = {"mode": a.mode, **dataclasses.asdict(cfg)}
+    config = {"mode": a.mode, "split": a.split, **dataclasses.asdict(cfg)}
     price(cfg.model)  # an unknown model would disable the cap: fail before any work
     if a.resume:
         run_dir = a.resume

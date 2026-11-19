@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import dataclasses
 import hashlib
+import json
 import re
 from pathlib import Path
 
@@ -11,7 +12,7 @@ from pathlib import Path
 @dataclasses.dataclass(frozen=True)
 class Task:
     task_id: str
-    family: str  # arithmetic | fsm | datapath | counter | comb ... used for splits
+    family: str  # chiprl/tasks/families.py FAMILIES, or "unlabeled"
     spec: str  # what the policy sees
     ports: tuple[tuple[str, str, int], ...]  # (dir, name, width)
     ref_rtl: str  # hidden. module RefModule
@@ -46,22 +47,24 @@ def parse_ports(ref_rtl: str) -> tuple[tuple[str, str, int], ...]:
     return tuple(ports)
 
 
-_FAMILY_HINTS = [
-    ("fsm", r"fsm|state|moore|mealy"),
-    ("counter", r"count"),
-    ("arith", r"add|sub|mul|popcount|sum"),
-    ("shift", r"shift|lfsr|rotate"),
-    ("mux", r"mux"),
-    ("gates", r"gate|xor|and|or|not|wire"),
-]
+_MANIFEST = Path(__file__).with_name("manifests") / "verilogeval_v2.json"
+_FAMILY_CACHE: dict[str, str] | None = None
 
 
-def guess_family(task_id: str, spec: str) -> str:
-    key = task_id.lower()
-    for fam, pat in _FAMILY_HINTS:
-        if re.search(pat, key):
-            return fam
-    return "other"
+def family_of(task_id: str) -> str:
+    """Structural family from the committed split manifest (chiprl/tasks/splits.py), else "unlabeled".
+
+    Families come from the synthesized reference, not from the task name, which is usually an
+    exam id. See chiprl/tasks/families.py.
+    """
+    global _FAMILY_CACHE
+    if _FAMILY_CACHE is None:
+        try:
+            rows = json.loads(_MANIFEST.read_text())["tasks"]
+            _FAMILY_CACHE = {tid: r["family"] for tid, r in rows.items()}
+        except (OSError, ValueError, KeyError):
+            _FAMILY_CACHE = {}
+    return _FAMILY_CACHE.get(task_id, "unlabeled")
 
 
 def load_verilogeval_dir(d: Path) -> Task:
@@ -70,7 +73,7 @@ def load_verilogeval_dir(d: Path) -> Task:
     spec = (d / "prompt.txt").read_text()
     return Task(
         task_id=d.name,
-        family=guess_family(d.name, spec),
+        family=family_of(d.name),
         spec=spec,
         ports=parse_ports(ref),
         ref_rtl=ref,
@@ -100,7 +103,7 @@ def load_verilogeval_dataset(
         tasks.append(
             Task(
                 task_id=stem,
-                family=guess_family(stem, spec),
+                family=family_of(stem),
                 spec=spec,
                 ports=parse_ports(ref),
                 ref_rtl=ref,

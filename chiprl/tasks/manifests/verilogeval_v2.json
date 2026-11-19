@@ -1,0 +1,2036 @@
+{
+ "dataset": "verilogeval_v2/dataset_spec-to-rtl",
+ "dataset_digest": "8a9a9aea974dfc96af0e31a9aab85aede8b11d5c3c8c4c5912b475a08b04e5e4",
+ "params": {
+  "iid_frac": 0.25,
+  "min_shingles": 40,
+  "near_dup_jaccard": 0.6,
+  "ood_families": [
+   "fsm"
+  ],
+  "seed": 0
+ },
+ "straddling_groups": [
+  "Prob002_m2014_q4i",
+  "Prob033_ece241_2014_q1c",
+  "Prob037_review2015_count1k",
+  "Prob061_2014_q4a"
+ ],
+ "tasks": {
+  "Prob001_zero": {
+   "content_hash": "8b6e9777f8a6510f",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 0,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob001_zero",
+   "split": "test_iid"
+  },
+  "Prob002_m2014_q4i": {
+   "content_hash": "5c2a18adc9288320",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 0,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob002_m2014_q4i",
+   "split": "train"
+  },
+  "Prob003_step_one": {
+   "content_hash": "ebac33eade4d7664",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 0,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob003_step_one",
+   "split": "train"
+  },
+  "Prob004_vector2": {
+   "content_hash": "e1688fdda2a385c2",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 0,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob004_vector2",
+   "split": "train"
+  },
+  "Prob005_notgate": {
+   "content_hash": "e5be49ae1b52281a",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 1,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob005_notgate",
+   "split": "train"
+  },
+  "Prob006_vectorr": {
+   "content_hash": "33aa961bbc5851e3",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 0,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob006_vectorr",
+   "split": "train"
+  },
+  "Prob007_wire": {
+   "content_hash": "c535ed9dc9f0414a",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 0,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob007_wire",
+   "split": "test_iid"
+  },
+  "Prob008_m2014_q4h": {
+   "content_hash": "a80476ebca512596",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 0,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob002_m2014_q4i",
+   "split": "train"
+  },
+  "Prob009_popcount3": {
+   "content_hash": "814f119bb809ef6c",
+   "family": "comb_arith",
+   "features": {
+    "arith": 2,
+    "cells": 2,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob009_popcount3",
+   "split": "test_iid"
+  },
+  "Prob010_mt2015_q4a": {
+   "content_hash": "07f2e6c60ffd6139",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 2,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob010_mt2015_q4a",
+   "split": "test_iid"
+  },
+  "Prob011_norgate": {
+   "content_hash": "529143140da8308c",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 2,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob011_norgate",
+   "split": "train"
+  },
+  "Prob012_xnorgate": {
+   "content_hash": "24bc6af73492a2f0",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 2,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob012_xnorgate",
+   "split": "train"
+  },
+  "Prob013_m2014_q4e": {
+   "content_hash": "2f9f59c66eb15053",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 2,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob002_m2014_q4i",
+   "split": "train"
+  },
+  "Prob014_andgate": {
+   "content_hash": "032125bee66e94e7",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 1,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob014_andgate",
+   "split": "test_iid"
+  },
+  "Prob015_vector1": {
+   "content_hash": "38ac58c764ecf78b",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 0,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob004_vector2",
+   "split": "train"
+  },
+  "Prob016_m2014_q4j": {
+   "content_hash": "6db47a25c08f32c7",
+   "family": "comb_arith",
+   "features": {
+    "arith": 1,
+    "cells": 1,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob002_m2014_q4i",
+   "split": "train"
+  },
+  "Prob017_mux2to1v": {
+   "content_hash": "6d70feaa6bb7281d",
+   "family": "comb_mux",
+   "features": {
+    "arith": 0,
+    "cells": 1,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 1
+   },
+   "group": "Prob017_mux2to1v",
+   "split": "train"
+  },
+  "Prob018_mux256to1": {
+   "content_hash": "75aa96ec540c9d3b",
+   "family": "comb_mux",
+   "features": {
+    "arith": 0,
+    "cells": 1,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 1
+   },
+   "group": "Prob017_mux2to1v",
+   "split": "train"
+  },
+  "Prob019_m2014_q4f": {
+   "content_hash": "94bf9199f11adecb",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 2,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob002_m2014_q4i",
+   "split": "train"
+  },
+  "Prob020_mt2015_eq2": {
+   "content_hash": "721e39a34ee5efd3",
+   "family": "comb_mux",
+   "features": {
+    "arith": 0,
+    "cells": 1,
+    "cmp": 1,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob010_mt2015_q4a",
+   "split": "test_iid"
+  },
+  "Prob021_mux256to1v": {
+   "content_hash": "f2f733ad524ce77a",
+   "family": "comb_arith",
+   "features": {
+    "arith": 3,
+    "cells": 15,
+    "cmp": 4,
+    "ff_bits": 0,
+    "mux": 8
+   },
+   "group": "Prob017_mux2to1v",
+   "split": "train"
+  },
+  "Prob022_mux2to1": {
+   "content_hash": "9a6cd6705ddf7394",
+   "family": "comb_mux",
+   "features": {
+    "arith": 0,
+    "cells": 1,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 1
+   },
+   "group": "Prob017_mux2to1v",
+   "split": "train"
+  },
+  "Prob023_vector100r": {
+   "content_hash": "d5fc2aaf8ad01727",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 0,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob004_vector2",
+   "split": "train"
+  },
+  "Prob024_hadd": {
+   "content_hash": "4350e1b14fd57c49",
+   "family": "comb_arith",
+   "features": {
+    "arith": 1,
+    "cells": 1,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob024_hadd",
+   "split": "train"
+  },
+  "Prob025_reduction": {
+   "content_hash": "d8a1fd18bc601239",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 1,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob025_reduction",
+   "split": "test_iid"
+  },
+  "Prob026_alwaysblock1": {
+   "content_hash": "309f2c514d5a13bc",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 1,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob026_alwaysblock1",
+   "split": "train"
+  },
+  "Prob027_fadd": {
+   "content_hash": "49eb13ec444e7835",
+   "family": "comb_arith",
+   "features": {
+    "arith": 2,
+    "cells": 2,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob027_fadd",
+   "split": "train"
+  },
+  "Prob028_m2014_q4a": {
+   "content_hash": "f72a3f0c7af40e0d",
+   "family": "seq_register",
+   "features": {
+    "arith": 0,
+    "cells": 3,
+    "cmp": 0,
+    "ff_bits": 1,
+    "mux": 2
+   },
+   "group": "Prob002_m2014_q4i",
+   "split": "train"
+  },
+  "Prob029_m2014_q4g": {
+   "content_hash": "f9bc12ffef2a963b",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 3,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob002_m2014_q4i",
+   "split": "train"
+  },
+  "Prob030_popcount255": {
+   "content_hash": "052f58de1d9c66b1",
+   "family": "comb_arith",
+   "features": {
+    "arith": 254,
+    "cells": 254,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob009_popcount3",
+   "split": "test_iid"
+  },
+  "Prob031_dff": {
+   "content_hash": "12d06054afcc9a2e",
+   "family": "seq_register",
+   "features": {
+    "arith": 0,
+    "cells": 1,
+    "cmp": 0,
+    "ff_bits": 1,
+    "mux": 0
+   },
+   "group": "Prob031_dff",
+   "split": "train"
+  },
+  "Prob032_vector0": {
+   "content_hash": "01acb8deed497959",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 0,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob004_vector2",
+   "split": "train"
+  },
+  "Prob033_ece241_2014_q1c": {
+   "content_hash": "58a1c1e75a7603a5",
+   "family": "comb_arith",
+   "features": {
+    "arith": 1,
+    "cells": 5,
+    "cmp": 1,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob033_ece241_2014_q1c",
+   "split": "test_iid"
+  },
+  "Prob034_dff8": {
+   "content_hash": "e05891cd19392f9e",
+   "family": "seq_register",
+   "features": {
+    "arith": 0,
+    "cells": 1,
+    "cmp": 0,
+    "ff_bits": 8,
+    "mux": 0
+   },
+   "group": "Prob031_dff",
+   "split": "train"
+  },
+  "Prob035_count1to10": {
+   "content_hash": "2283762c6c6bef3d",
+   "family": "seq_counter",
+   "features": {
+    "arith": 1,
+    "cells": 4,
+    "cmp": 1,
+    "ff_bits": 4,
+    "mux": 0
+   },
+   "group": "Prob035_count1to10",
+   "split": "test_iid"
+  },
+  "Prob036_ringer": {
+   "content_hash": "f329e2f28df26156",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 3,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob036_ringer",
+   "split": "test_iid"
+  },
+  "Prob037_review2015_count1k": {
+   "content_hash": "2a572f02d2f31c14",
+   "family": "seq_counter",
+   "features": {
+    "arith": 1,
+    "cells": 4,
+    "cmp": 1,
+    "ff_bits": 10,
+    "mux": 0
+   },
+   "group": "Prob037_review2015_count1k",
+   "split": "train"
+  },
+  "Prob038_count15": {
+   "content_hash": "38c0fc8776be56f3",
+   "family": "seq_counter",
+   "features": {
+    "arith": 1,
+    "cells": 2,
+    "cmp": 0,
+    "ff_bits": 4,
+    "mux": 0
+   },
+   "group": "Prob035_count1to10",
+   "split": "test_iid"
+  },
+  "Prob039_always_if": {
+   "content_hash": "1090265c30234743",
+   "family": "comb_mux",
+   "features": {
+    "arith": 0,
+    "cells": 2,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 1
+   },
+   "group": "Prob039_always_if",
+   "split": "train"
+  },
+  "Prob040_count10": {
+   "content_hash": "2b3aea22c7b2563d",
+   "family": "seq_counter",
+   "features": {
+    "arith": 1,
+    "cells": 4,
+    "cmp": 1,
+    "ff_bits": 4,
+    "mux": 0
+   },
+   "group": "Prob035_count1to10",
+   "split": "test_iid"
+  },
+  "Prob041_dff8r": {
+   "content_hash": "36e00703741d1a73",
+   "family": "seq_register",
+   "features": {
+    "arith": 0,
+    "cells": 1,
+    "cmp": 0,
+    "ff_bits": 8,
+    "mux": 0
+   },
+   "group": "Prob031_dff",
+   "split": "train"
+  },
+  "Prob042_vector4": {
+   "content_hash": "27a9fbcc87c42985",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 0,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob004_vector2",
+   "split": "train"
+  },
+  "Prob043_vector5": {
+   "content_hash": "8558901c247968c0",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 2,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob004_vector2",
+   "split": "train"
+  },
+  "Prob044_vectorgates": {
+   "content_hash": "b72cbae3012da09c",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 4,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob044_vectorgates",
+   "split": "test_iid"
+  },
+  "Prob045_edgedetect2": {
+   "content_hash": "bb629e2bec6401a2",
+   "family": "seq_register",
+   "features": {
+    "arith": 0,
+    "cells": 3,
+    "cmp": 0,
+    "ff_bits": 16,
+    "mux": 0
+   },
+   "group": "Prob045_edgedetect2",
+   "split": "train"
+  },
+  "Prob046_dff8p": {
+   "content_hash": "9839ca899af626cd",
+   "family": "seq_register",
+   "features": {
+    "arith": 0,
+    "cells": 1,
+    "cmp": 0,
+    "ff_bits": 8,
+    "mux": 0
+   },
+   "group": "Prob031_dff",
+   "split": "train"
+  },
+  "Prob047_dff8ar": {
+   "content_hash": "c2d89b5ddf111f9a",
+   "family": "seq_register",
+   "features": {
+    "arith": 0,
+    "cells": 1,
+    "cmp": 0,
+    "ff_bits": 8,
+    "mux": 0
+   },
+   "group": "Prob031_dff",
+   "split": "train"
+  },
+  "Prob048_m2014_q4c": {
+   "content_hash": "fd8aa8578663ea51",
+   "family": "seq_register",
+   "features": {
+    "arith": 0,
+    "cells": 1,
+    "cmp": 0,
+    "ff_bits": 1,
+    "mux": 0
+   },
+   "group": "Prob002_m2014_q4i",
+   "split": "train"
+  },
+  "Prob049_m2014_q4b": {
+   "content_hash": "6d2a742506e73d51",
+   "family": "seq_register",
+   "features": {
+    "arith": 0,
+    "cells": 1,
+    "cmp": 0,
+    "ff_bits": 1,
+    "mux": 0
+   },
+   "group": "Prob002_m2014_q4i",
+   "split": "train"
+  },
+  "Prob050_kmap1": {
+   "content_hash": "9870b4b2c5dabf3f",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 2,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob050_kmap1",
+   "split": "train"
+  },
+  "Prob051_gates4": {
+   "content_hash": "07c6353c131b6140",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 3,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob051_gates4",
+   "split": "train"
+  },
+  "Prob052_gates100": {
+   "content_hash": "b7d8f249663b4bad",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 3,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob051_gates4",
+   "split": "train"
+  },
+  "Prob053_m2014_q4d": {
+   "content_hash": "5bcc1dba06a2e35c",
+   "family": "seq_register",
+   "features": {
+    "arith": 0,
+    "cells": 2,
+    "cmp": 0,
+    "ff_bits": 1,
+    "mux": 0
+   },
+   "group": "Prob002_m2014_q4i",
+   "split": "train"
+  },
+  "Prob054_edgedetect": {
+   "content_hash": "165c7602df8cee87",
+   "family": "seq_register",
+   "features": {
+    "arith": 0,
+    "cells": 4,
+    "cmp": 0,
+    "ff_bits": 16,
+    "mux": 0
+   },
+   "group": "Prob045_edgedetect2",
+   "split": "train"
+  },
+  "Prob055_conditional": {
+   "content_hash": "a629d302c10d17f2",
+   "family": "comb_mux",
+   "features": {
+    "arith": 0,
+    "cells": 6,
+    "cmp": 3,
+    "ff_bits": 0,
+    "mux": 3
+   },
+   "group": "Prob055_conditional",
+   "split": "train"
+  },
+  "Prob056_ece241_2013_q7": {
+   "content_hash": "382de9686e2521fb",
+   "family": "seq_register",
+   "features": {
+    "arith": 0,
+    "cells": 6,
+    "cmp": 0,
+    "ff_bits": 1,
+    "mux": 0
+   },
+   "group": "Prob033_ece241_2014_q1c",
+   "split": "test_iid"
+  },
+  "Prob057_kmap2": {
+   "content_hash": "f70fb03c76d043c9",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 13,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob050_kmap1",
+   "split": "train"
+  },
+  "Prob058_alwaysblock2": {
+   "content_hash": "6bdba05a1d1e9961",
+   "family": "seq_register",
+   "features": {
+    "arith": 0,
+    "cells": 2,
+    "cmp": 0,
+    "ff_bits": 1,
+    "mux": 0
+   },
+   "group": "Prob026_alwaysblock1",
+   "split": "train"
+  },
+  "Prob059_wire4": {
+   "content_hash": "c40a35e722ccbc77",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 0,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob007_wire",
+   "split": "test_iid"
+  },
+  "Prob060_m2014_q4k": {
+   "content_hash": "e19fc302b04f99de",
+   "family": "seq_register",
+   "features": {
+    "arith": 0,
+    "cells": 1,
+    "cmp": 0,
+    "ff_bits": 4,
+    "mux": 0
+   },
+   "group": "Prob002_m2014_q4i",
+   "split": "train"
+  },
+  "Prob061_2014_q4a": {
+   "content_hash": "ee02421845b6959d",
+   "family": "seq_register",
+   "features": {
+    "arith": 0,
+    "cells": 4,
+    "cmp": 0,
+    "ff_bits": 1,
+    "mux": 2
+   },
+   "group": "Prob061_2014_q4a",
+   "split": "test_iid"
+  },
+  "Prob062_bugs_mux2": {
+   "content_hash": "3149dfe05a8fa7a2",
+   "family": "comb_mux",
+   "features": {
+    "arith": 0,
+    "cells": 1,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 1
+   },
+   "group": "Prob062_bugs_mux2",
+   "split": "test_iid"
+  },
+  "Prob063_review2015_shiftcount": {
+   "content_hash": "f3532f01c8fbbd47",
+   "family": "seq_counter",
+   "features": {
+    "arith": 1,
+    "cells": 5,
+    "cmp": 0,
+    "ff_bits": 4,
+    "mux": 2
+   },
+   "group": "Prob037_review2015_count1k",
+   "split": "train"
+  },
+  "Prob064_vector3": {
+   "content_hash": "6bc7a188b071aab4",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 0,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob004_vector2",
+   "split": "train"
+  },
+  "Prob065_7420": {
+   "content_hash": "21d59acaf99a6090",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 4,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob065_7420",
+   "split": "test_iid"
+  },
+  "Prob066_edgecapture": {
+   "content_hash": "1daa23d7cdf8fc0b",
+   "family": "seq_register",
+   "features": {
+    "arith": 0,
+    "cells": 35,
+    "cmp": 0,
+    "ff_bits": 64,
+    "mux": 0
+   },
+   "group": "Prob066_edgecapture",
+   "split": "train"
+  },
+  "Prob067_countslow": {
+   "content_hash": "5c49e953aff38ad9",
+   "family": "seq_counter",
+   "features": {
+    "arith": 1,
+    "cells": 4,
+    "cmp": 1,
+    "ff_bits": 4,
+    "mux": 1
+   },
+   "group": "Prob067_countslow",
+   "split": "train"
+  },
+  "Prob068_countbcd": {
+   "content_hash": "5ec69d45c90c2db8",
+   "family": "seq_counter",
+   "features": {
+    "arith": 4,
+    "cells": 21,
+    "cmp": 6,
+    "ff_bits": 16,
+    "mux": 0
+   },
+   "group": "Prob068_countbcd",
+   "split": "train"
+  },
+  "Prob069_truthtable1": {
+   "content_hash": "5df519ba4112cc6e",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 13,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob069_truthtable1",
+   "split": "train"
+  },
+  "Prob070_ece241_2013_q2": {
+   "content_hash": "d1e0004fa473eb96",
+   "family": "comb_mux",
+   "features": {
+    "arith": 0,
+    "cells": 14,
+    "cmp": 1,
+    "ff_bits": 0,
+    "mux": 1
+   },
+   "group": "Prob033_ece241_2014_q1c",
+   "split": "test_iid"
+  },
+  "Prob071_always_casez": {
+   "content_hash": "2a920cccc65964c0",
+   "family": "comb_mux",
+   "features": {
+    "arith": 0,
+    "cells": 8,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 8
+   },
+   "group": "Prob039_always_if",
+   "split": "train"
+  },
+  "Prob072_thermostat": {
+   "content_hash": "735180d76e822a59",
+   "family": "comb_mux",
+   "features": {
+    "arith": 0,
+    "cells": 5,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 1
+   },
+   "group": "Prob072_thermostat",
+   "split": "test_iid"
+  },
+  "Prob073_dff16e": {
+   "content_hash": "eb8293554cb86e15",
+   "family": "seq_register",
+   "features": {
+    "arith": 0,
+    "cells": 2,
+    "cmp": 0,
+    "ff_bits": 16,
+    "mux": 0
+   },
+   "group": "Prob031_dff",
+   "split": "train"
+  },
+  "Prob074_ece241_2014_q4": {
+   "content_hash": "871eb4745ce8b335",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 8,
+    "cmp": 0,
+    "ff_bits": 3,
+    "mux": 0
+   },
+   "group": "Prob033_ece241_2014_q1c",
+   "split": "test_ood"
+  },
+  "Prob075_counter_2bc": {
+   "content_hash": "c6edd515c6560313",
+   "family": "seq_counter",
+   "features": {
+    "arith": 2,
+    "cells": 12,
+    "cmp": 2,
+    "ff_bits": 2,
+    "mux": 2
+   },
+   "group": "Prob075_counter_2bc",
+   "split": "train"
+  },
+  "Prob076_always_case": {
+   "content_hash": "25c2669ef74e969f",
+   "family": "comb_mux",
+   "features": {
+    "arith": 0,
+    "cells": 7,
+    "cmp": 5,
+    "ff_bits": 0,
+    "mux": 1
+   },
+   "group": "Prob039_always_if",
+   "split": "train"
+  },
+  "Prob077_wire_decl": {
+   "content_hash": "d068ae2cc468c81d",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 4,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob007_wire",
+   "split": "test_iid"
+  },
+  "Prob078_dualedge": {
+   "content_hash": "fa9051e1c44d3227",
+   "family": "seq_register",
+   "features": {
+    "arith": 0,
+    "cells": 3,
+    "cmp": 0,
+    "ff_bits": 2,
+    "mux": 1
+   },
+   "group": "Prob078_dualedge",
+   "split": "train"
+  },
+  "Prob079_fsm3onehot": {
+   "content_hash": "08a2ae7da33365d1",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 9,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob079_fsm3onehot",
+   "split": "test_ood"
+  },
+  "Prob080_timer": {
+   "content_hash": "f7f19329553f47b1",
+   "family": "seq_counter",
+   "features": {
+    "arith": 1,
+    "cells": 7,
+    "cmp": 0,
+    "ff_bits": 10,
+    "mux": 2
+   },
+   "group": "Prob080_timer",
+   "split": "train"
+  },
+  "Prob081_7458": {
+   "content_hash": "cf30bc90ca487fa8",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 6,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob081_7458",
+   "split": "train"
+  },
+  "Prob082_lfsr32": {
+   "content_hash": "4df7ca7a30c2e4ca",
+   "family": "seq_register",
+   "features": {
+    "arith": 0,
+    "cells": 4,
+    "cmp": 0,
+    "ff_bits": 32,
+    "mux": 0
+   },
+   "group": "Prob082_lfsr32",
+   "split": "train"
+  },
+  "Prob083_mt2015_q4b": {
+   "content_hash": "7c1e01f01ebfb226",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 2,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob010_mt2015_q4a",
+   "split": "test_iid"
+  },
+  "Prob084_ece241_2013_q12": {
+   "content_hash": "1dc2459fb90f947b",
+   "family": "seq_register",
+   "features": {
+    "arith": 0,
+    "cells": 2,
+    "cmp": 0,
+    "ff_bits": 8,
+    "mux": 1
+   },
+   "group": "Prob033_ece241_2014_q1c",
+   "split": "test_iid"
+  },
+  "Prob085_shift4": {
+   "content_hash": "2cc87602de256ab4",
+   "family": "seq_register",
+   "features": {
+    "arith": 0,
+    "cells": 4,
+    "cmp": 0,
+    "ff_bits": 4,
+    "mux": 2
+   },
+   "group": "Prob085_shift4",
+   "split": "train"
+  },
+  "Prob086_lfsr5": {
+   "content_hash": "92eadd245ee7070f",
+   "family": "seq_register",
+   "features": {
+    "arith": 0,
+    "cells": 2,
+    "cmp": 0,
+    "ff_bits": 5,
+    "mux": 0
+   },
+   "group": "Prob082_lfsr32",
+   "split": "train"
+  },
+  "Prob087_gates": {
+   "content_hash": "00e7517922f72a2b",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 8,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob051_gates4",
+   "split": "train"
+  },
+  "Prob088_ece241_2014_q5b": {
+   "content_hash": "b6d1785bda6ff3dc",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 8,
+    "cmp": 0,
+    "ff_bits": 1,
+    "mux": 2
+   },
+   "group": "Prob033_ece241_2014_q1c",
+   "split": "test_ood"
+  },
+  "Prob089_ece241_2014_q5a": {
+   "content_hash": "e69628fc3a045a39",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 9,
+    "cmp": 2,
+    "ff_bits": 2,
+    "mux": 3
+   },
+   "group": "Prob033_ece241_2014_q1c",
+   "split": "test_ood"
+  },
+  "Prob090_circuit1": {
+   "content_hash": "7463ee5eacfc9fe0",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 1,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob090_circuit1",
+   "split": "train"
+  },
+  "Prob091_2012_q2b": {
+   "content_hash": "8b5a2a3b7bff89ab",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 6,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob002_m2014_q4i",
+   "split": "test_ood"
+  },
+  "Prob092_gatesv100": {
+   "content_hash": "b0f9bba9ca857314",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 3,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob092_gatesv100",
+   "split": "test_iid"
+  },
+  "Prob093_ece241_2014_q3": {
+   "content_hash": "7ab352895f9da18f",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 3,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob033_ece241_2014_q1c",
+   "split": "test_iid"
+  },
+  "Prob094_gatesv": {
+   "content_hash": "d331d0517abba9d3",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 3,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob092_gatesv100",
+   "split": "test_iid"
+  },
+  "Prob095_review2015_fsmshift": {
+   "content_hash": "34d37945140ce6d4",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 11,
+    "cmp": 4,
+    "ff_bits": 3,
+    "mux": 1
+   },
+   "group": "Prob037_review2015_count1k",
+   "split": "test_ood"
+  },
+  "Prob096_review2015_fsmseq": {
+   "content_hash": "54f7de4d3b71a399",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 11,
+    "cmp": 4,
+    "ff_bits": 3,
+    "mux": 5
+   },
+   "group": "Prob037_review2015_count1k",
+   "split": "test_ood"
+  },
+  "Prob097_mux9to1v": {
+   "content_hash": "9a2140d2336d2455",
+   "family": "comb_mux",
+   "features": {
+    "arith": 0,
+    "cells": 10,
+    "cmp": 8,
+    "ff_bits": 0,
+    "mux": 1
+   },
+   "group": "Prob017_mux2to1v",
+   "split": "train"
+  },
+  "Prob098_circuit7": {
+   "content_hash": "41d1563c12a6a827",
+   "family": "seq_register",
+   "features": {
+    "arith": 0,
+    "cells": 2,
+    "cmp": 0,
+    "ff_bits": 1,
+    "mux": 0
+   },
+   "group": "Prob090_circuit1",
+   "split": "train"
+  },
+  "Prob100_fsm3comb": {
+   "content_hash": "9e3d88a8b57ac808",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 9,
+    "cmp": 3,
+    "ff_bits": 0,
+    "mux": 4
+   },
+   "group": "Prob079_fsm3onehot",
+   "split": "test_ood"
+  },
+  "Prob101_circuit4": {
+   "content_hash": "94dad75fab4faf61",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 1,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob090_circuit1",
+   "split": "train"
+  },
+  "Prob102_circuit3": {
+   "content_hash": "04eaf912c54f46a1",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 3,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob090_circuit1",
+   "split": "train"
+  },
+  "Prob103_circuit2": {
+   "content_hash": "46b855f67d191d12",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 4,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob090_circuit1",
+   "split": "train"
+  },
+  "Prob104_mt2015_muxdff": {
+   "content_hash": "844aec09b0ae5df7",
+   "family": "seq_register",
+   "features": {
+    "arith": 0,
+    "cells": 2,
+    "cmp": 0,
+    "ff_bits": 1,
+    "mux": 1
+   },
+   "group": "Prob010_mt2015_q4a",
+   "split": "test_iid"
+  },
+  "Prob105_rotate100": {
+   "content_hash": "10cb8fa17bb16591",
+   "family": "seq_register",
+   "features": {
+    "arith": 0,
+    "cells": 7,
+    "cmp": 2,
+    "ff_bits": 100,
+    "mux": 3
+   },
+   "group": "Prob105_rotate100",
+   "split": "train"
+  },
+  "Prob106_always_nolatches": {
+   "content_hash": "a9f30b739277074d",
+   "family": "comb_mux",
+   "features": {
+    "arith": 0,
+    "cells": 8,
+    "cmp": 4,
+    "ff_bits": 0,
+    "mux": 4
+   },
+   "group": "Prob039_always_if",
+   "split": "train"
+  },
+  "Prob107_fsm1s": {
+   "content_hash": "d86f2948f4b42241",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 5,
+    "cmp": 0,
+    "ff_bits": 1,
+    "mux": 3
+   },
+   "group": "Prob079_fsm3onehot",
+   "split": "test_ood"
+  },
+  "Prob108_rule90": {
+   "content_hash": "29d94795caf623c2",
+   "family": "seq_register",
+   "features": {
+    "arith": 0,
+    "cells": 3,
+    "cmp": 0,
+    "ff_bits": 512,
+    "mux": 1
+   },
+   "group": "Prob108_rule90",
+   "split": "train"
+  },
+  "Prob109_fsm1": {
+   "content_hash": "1969c0d6211ed077",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 5,
+    "cmp": 0,
+    "ff_bits": 1,
+    "mux": 3
+   },
+   "group": "Prob079_fsm3onehot",
+   "split": "test_ood"
+  },
+  "Prob110_fsm2": {
+   "content_hash": "3b10474a6eb69260",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 5,
+    "cmp": 0,
+    "ff_bits": 1,
+    "mux": 3
+   },
+   "group": "Prob079_fsm3onehot",
+   "split": "test_ood"
+  },
+  "Prob111_fsm2s": {
+   "content_hash": "b1145cdb5efce127",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 5,
+    "cmp": 0,
+    "ff_bits": 1,
+    "mux": 3
+   },
+   "group": "Prob079_fsm3onehot",
+   "split": "test_ood"
+  },
+  "Prob112_always_case2": {
+   "content_hash": "72e9af4f1a97ae6e",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 2,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob039_always_if",
+   "split": "train"
+  },
+  "Prob113_2012_q1g": {
+   "content_hash": "04a91220665fa370",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 2,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob002_m2014_q4i",
+   "split": "train"
+  },
+  "Prob114_bugs_case": {
+   "content_hash": "8dd5345487dfc933",
+   "family": "comb_mux",
+   "features": {
+    "arith": 0,
+    "cells": 20,
+    "cmp": 10,
+    "ff_bits": 0,
+    "mux": 5
+   },
+   "group": "Prob062_bugs_mux2",
+   "split": "test_iid"
+  },
+  "Prob115_shift18": {
+   "content_hash": "1090bbc1855e845a",
+   "family": "seq_register",
+   "features": {
+    "arith": 0,
+    "cells": 13,
+    "cmp": 5,
+    "ff_bits": 64,
+    "mux": 3
+   },
+   "group": "Prob085_shift4",
+   "split": "train"
+  },
+  "Prob116_m2014_q3": {
+   "content_hash": "c0eb18f0ff114e62",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 2,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob002_m2014_q4i",
+   "split": "train"
+  },
+  "Prob117_circuit9": {
+   "content_hash": "07f760797bbe4326",
+   "family": "seq_counter",
+   "features": {
+    "arith": 1,
+    "cells": 6,
+    "cmp": 1,
+    "ff_bits": 3,
+    "mux": 1
+   },
+   "group": "Prob090_circuit1",
+   "split": "train"
+  },
+  "Prob118_history_shift": {
+   "content_hash": "64fbc84cced1a5c6",
+   "family": "seq_register",
+   "features": {
+    "arith": 0,
+    "cells": 4,
+    "cmp": 0,
+    "ff_bits": 32,
+    "mux": 2
+   },
+   "group": "Prob118_history_shift",
+   "split": "train"
+  },
+  "Prob119_fsm3": {
+   "content_hash": "b2e17f788420a1d9",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 10,
+    "cmp": 3,
+    "ff_bits": 2,
+    "mux": 4
+   },
+   "group": "Prob079_fsm3onehot",
+   "split": "test_ood"
+  },
+  "Prob120_fsm3s": {
+   "content_hash": "2ff2ea3d189ac458",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 10,
+    "cmp": 3,
+    "ff_bits": 2,
+    "mux": 4
+   },
+   "group": "Prob079_fsm3onehot",
+   "split": "test_ood"
+  },
+  "Prob121_2014_q3bfsm": {
+   "content_hash": "79348887089d03f0",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 13,
+    "cmp": 4,
+    "ff_bits": 3,
+    "mux": 6
+   },
+   "group": "Prob061_2014_q4a",
+   "split": "test_ood"
+  },
+  "Prob122_kmap4": {
+   "content_hash": "713e89e5cbcdd5be",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 2,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob050_kmap1",
+   "split": "train"
+  },
+  "Prob123_bugs_addsubz": {
+   "content_hash": "2ebd9e9141274e5b",
+   "family": "comb_arith",
+   "features": {
+    "arith": 2,
+    "cells": 5,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 1
+   },
+   "group": "Prob062_bugs_mux2",
+   "split": "test_iid"
+  },
+  "Prob124_rule110": {
+   "content_hash": "ae19b716e6b59ad6",
+   "family": "seq_register",
+   "features": {
+    "arith": 0,
+    "cells": 14,
+    "cmp": 0,
+    "ff_bits": 512,
+    "mux": 1
+   },
+   "group": "Prob108_rule90",
+   "split": "train"
+  },
+  "Prob125_kmap3": {
+   "content_hash": "9c0570d6a574a52e",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 2,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob050_kmap1",
+   "split": "train"
+  },
+  "Prob126_circuit6": {
+   "content_hash": "3aca8b362d18745a",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 2,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob090_circuit1",
+   "split": "train"
+  },
+  "Prob127_lemmings1": {
+   "content_hash": "ef828f83873ddd59",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 5,
+    "cmp": 0,
+    "ff_bits": 1,
+    "mux": 3
+   },
+   "group": "Prob127_lemmings1",
+   "split": "test_ood"
+  },
+  "Prob128_fsm_ps2": {
+   "content_hash": "7f3a9c6f6f3990f3",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 8,
+    "cmp": 3,
+    "ff_bits": 2,
+    "mux": 2
+   },
+   "group": "Prob079_fsm3onehot",
+   "split": "test_ood"
+  },
+  "Prob129_ece241_2013_q8": {
+   "content_hash": "7ccaf39962bbb562",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 10,
+    "cmp": 2,
+    "ff_bits": 2,
+    "mux": 4
+   },
+   "group": "Prob033_ece241_2014_q1c",
+   "split": "test_ood"
+  },
+  "Prob130_circuit5": {
+   "content_hash": "8ca77986d8d6e0d0",
+   "family": "comb_mux",
+   "features": {
+    "arith": 0,
+    "cells": 5,
+    "cmp": 3,
+    "ff_bits": 0,
+    "mux": 1
+   },
+   "group": "Prob090_circuit1",
+   "split": "train"
+  },
+  "Prob131_mt2015_q4": {
+   "content_hash": "632924b618429ecf",
+   "family": "comb_logic",
+   "features": {
+    "arith": 0,
+    "cells": 2,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob010_mt2015_q4a",
+   "split": "test_iid"
+  },
+  "Prob132_always_if2": {
+   "content_hash": "298a9492c080f1d5",
+   "family": "comb_mux",
+   "features": {
+    "arith": 0,
+    "cells": 3,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 2
+   },
+   "group": "Prob039_always_if",
+   "split": "train"
+  },
+  "Prob133_2014_q3fsm": {
+   "content_hash": "80a54fa468cfa298",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 17,
+    "cmp": 7,
+    "ff_bits": 3,
+    "mux": 7
+   },
+   "group": "Prob061_2014_q4a",
+   "split": "test_ood"
+  },
+  "Prob134_2014_q3c": {
+   "content_hash": "88d82b14758c1d89",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 10,
+    "cmp": 4,
+    "ff_bits": 0,
+    "mux": 1
+   },
+   "group": "Prob061_2014_q4a",
+   "split": "test_ood"
+  },
+  "Prob135_m2014_q6b": {
+   "content_hash": "12b196f32132a235",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 2,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob002_m2014_q4i",
+   "split": "test_ood"
+  },
+  "Prob136_m2014_q6": {
+   "content_hash": "c75b05ed5c91701b",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 15,
+    "cmp": 5,
+    "ff_bits": 3,
+    "mux": 5
+   },
+   "group": "Prob002_m2014_q4i",
+   "split": "test_ood"
+  },
+  "Prob137_fsm_serial": {
+   "content_hash": "a31a052954ffe317",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 18,
+    "cmp": 11,
+    "ff_bits": 4,
+    "mux": 4
+   },
+   "group": "Prob079_fsm3onehot",
+   "split": "test_ood"
+  },
+  "Prob138_2012_q2fsm": {
+   "content_hash": "a1c30d75d5a5aea9",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 15,
+    "cmp": 5,
+    "ff_bits": 3,
+    "mux": 5
+   },
+   "group": "Prob002_m2014_q4i",
+   "split": "test_ood"
+  },
+  "Prob139_2013_q2bfsm": {
+   "content_hash": "769576a661e0a018",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 18,
+    "cmp": 8,
+    "ff_bits": 4,
+    "mux": 6
+   },
+   "group": "Prob139_2013_q2bfsm",
+   "split": "test_ood"
+  },
+  "Prob140_fsm_hdlc": {
+   "content_hash": "362cce12bda84665",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 21,
+    "cmp": 9,
+    "ff_bits": 4,
+    "mux": 9
+   },
+   "group": "Prob079_fsm3onehot",
+   "split": "test_ood"
+  },
+  "Prob141_count_clock": {
+   "content_hash": "5a6f0214e8300ad1",
+   "family": "seq_counter",
+   "features": {
+    "arith": 6,
+    "cells": 53,
+    "cmp": 11,
+    "ff_bits": 25,
+    "mux": 12
+   },
+   "group": "Prob035_count1to10",
+   "split": "test_iid"
+  },
+  "Prob142_lemmings2": {
+   "content_hash": "5f0ea61c5a25b585",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 13,
+    "cmp": 3,
+    "ff_bits": 2,
+    "mux": 7
+   },
+   "group": "Prob127_lemmings1",
+   "split": "test_ood"
+  },
+  "Prob143_fsm_onehot": {
+   "content_hash": "69a2f5faa5891981",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 20,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob079_fsm3onehot",
+   "split": "test_ood"
+  },
+  "Prob144_conwaylife": {
+   "content_hash": "86298d67b902a19e",
+   "family": "seq_counter",
+   "features": {
+    "arith": 1792,
+    "cells": 2306,
+    "cmp": 256,
+    "ff_bits": 256,
+    "mux": 1
+   },
+   "group": "Prob144_conwaylife",
+   "split": "train"
+  },
+  "Prob145_circuit8": {
+   "content_hash": "8ef41ee3eeb27f04",
+   "family": "seq_register",
+   "features": {
+    "arith": 0,
+    "cells": 4,
+    "cmp": 0,
+    "ff_bits": 2,
+    "mux": 2
+   },
+   "group": "Prob090_circuit1",
+   "split": "train"
+  },
+  "Prob146_fsm_serialdata": {
+   "content_hash": "f7ef01ca8a54de6b",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 20,
+    "cmp": 11,
+    "ff_bits": 14,
+    "mux": 5
+   },
+   "group": "Prob079_fsm3onehot",
+   "split": "test_ood"
+  },
+  "Prob147_circuit10": {
+   "content_hash": "31eaa0cb78e8b83c",
+   "family": "seq_register",
+   "features": {
+    "arith": 0,
+    "cells": 8,
+    "cmp": 0,
+    "ff_bits": 1,
+    "mux": 0
+   },
+   "group": "Prob090_circuit1",
+   "split": "train"
+  },
+  "Prob148_2013_q2afsm": {
+   "content_hash": "949ad0c0662696c4",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 12,
+    "cmp": 3,
+    "ff_bits": 2,
+    "mux": 7
+   },
+   "group": "Prob139_2013_q2bfsm",
+   "split": "test_ood"
+  },
+  "Prob149_ece241_2013_q4": {
+   "content_hash": "8eb30a106c678a5e",
+   "family": "seq_register",
+   "features": {
+    "arith": 0,
+    "cells": 18,
+    "cmp": 5,
+    "ff_bits": 3,
+    "mux": 11
+   },
+   "group": "Prob033_ece241_2014_q1c",
+   "split": "test_iid"
+  },
+  "Prob150_review2015_fsmonehot": {
+   "content_hash": "769c0aec01f09d97",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 17,
+    "cmp": 0,
+    "ff_bits": 0,
+    "mux": 0
+   },
+   "group": "Prob037_review2015_count1k",
+   "split": "test_ood"
+  },
+  "Prob151_review2015_fsm": {
+   "content_hash": "e137768d76e4820c",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 29,
+    "cmp": 10,
+    "ff_bits": 4,
+    "mux": 13
+   },
+   "group": "Prob037_review2015_count1k",
+   "split": "test_ood"
+  },
+  "Prob152_lemmings3": {
+   "content_hash": "6e448de2865cdd6d",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 20,
+    "cmp": 5,
+    "ff_bits": 3,
+    "mux": 11
+   },
+   "group": "Prob127_lemmings1",
+   "split": "test_ood"
+  },
+  "Prob153_gshare": {
+   "content_hash": "a82aaad41ffcab12",
+   "family": "seq_counter",
+   "features": {
+    "arith": 2,
+    "cells": 152,
+    "cmp": 2,
+    "ff_bits": 263,
+    "mux": 10
+   },
+   "group": "Prob153_gshare",
+   "split": "train"
+  },
+  "Prob154_fsm_ps2data": {
+   "content_hash": "4df50dc9323a8367",
+   "family": "fsm",
+   "features": {
+    "arith": 0,
+    "cells": 10,
+    "cmp": 3,
+    "ff_bits": 26,
+    "mux": 3
+   },
+   "group": "Prob079_fsm3onehot",
+   "split": "test_ood"
+  },
+  "Prob155_lemmings4": {
+   "content_hash": "281106228c01d9a7",
+   "family": "fsm",
+   "features": {
+    "arith": 1,
+    "cells": 27,
+    "cmp": 8,
+    "ff_bits": 8,
+    "mux": 13
+   },
+   "group": "Prob127_lemmings1",
+   "split": "test_ood"
+  },
+  "Prob156_review2015_fancytimer": {
+   "content_hash": "8853fdfe10284186",
+   "family": "fsm",
+   "features": {
+    "arith": 2,
+    "cells": 43,
+    "cmp": 11,
+    "ff_bits": 18,
+    "mux": 16
+   },
+   "group": "Prob037_review2015_count1k",
+   "split": "test_ood"
+  }
+ }
+}
